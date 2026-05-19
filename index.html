@@ -1,0 +1,1553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Survey Report Builder - Compact Focus Layout</title>
+  <style>
+    :root{
+      --bg:#f4f7fb; --panel:#ffffff; --ink:#1f2937; --muted:#667085; --line:#d9e2ef;
+      --brand:#214a7a; --brand2:#0b6b8f; --accent:#f59e0b; --good:#0f766e; --bad:#b42318;
+      --chip:#edf4ff; --chipline:#b8cff0; --drop:#f8fbff;
+      --shadow:0 8px 25px rgba(15,23,42,.08);
+      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font-size:10px;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+    header{background:linear-gradient(120deg,#17375e,#0c6f91);color:#fff;padding:6px 10px;box-shadow:var(--shadow);flex:0 0 auto}
+    header h1{font-size:14px;margin:0 0 2px 0;font-weight:750;letter-spacing:.2px}
+    header .sub{opacity:.9;font-size:9px}
+    .toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:5px 8px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;flex:0 0 auto;font-size:10px}
+    .toolbar input[type=file]{max-width:350px}
+    button,.btn{border:1px solid #b9c8da;background:#fff;border-radius:6px;padding:4px 7px;cursor:pointer;color:var(--ink);font-weight:650;box-shadow:0 1px 0 rgba(0,0,0,.03);font-size:10px}
+    button.primary,.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+    button.good{background:var(--good);color:#fff;border-color:var(--good)}
+    button.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+    button.danger{background:#fef3f2;border-color:#fecaca;color:#b42318}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    select,input[type=text],input[type=number],textarea{border:1px solid #c6d3e1;border-radius:6px;padding:4px 6px;background:#fff;color:var(--ink);font:inherit;font-size:10px}
+    label{font-weight:650;color:#344054}
+    .layout{display:grid;grid-template-columns:220px minmax(520px,1fr);gap:6px;padding:6px;flex:1;min-height:0;overflow:hidden}
+    aside,.mainpanel,.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+    aside{display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden}
+    .side-head{padding:6px;border-bottom:1px solid var(--line);font-size:10px}
+    .side-head input{width:100%;margin-top:4px}
+    .tabs{display:flex;gap:3px;padding:4px 6px;border-bottom:1px solid var(--line);background:#fbfdff}
+    .tab{border-radius:999px;padding:4px 6px;border:1px solid transparent;cursor:pointer;font-weight:700;color:#475467;font-size:10px}
+    .tab.active{background:#e9f2ff;border-color:#bdd5f4;color:#17375e}
+    .var-list{overflow:auto;padding:4px;flex:1;min-height:0;height:auto}
+    .var-item{border:1px solid #d8e4f2;border-radius:7px;background:#fff;padding:5px;margin-bottom:4px;cursor:grab}
+    .var-item:hover{border-color:#91b7df;background:#f8fbff}
+    .var-title{font-weight:750;line-height:1.25;color:#1d344f}
+    .var-meta{font-size:8px;color:var(--muted);margin-top:2px;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+    .badge{display:inline-block;border-radius:999px;padding:1px 5px;font-size:8px;background:#eef4ff;color:#1849a9;border:1px solid #c7d7fe;font-weight:750}
+    .badge.group{background:#ecfdf3;color:#027a48;border-color:#abefc6}.badge.bi{background:#fff7ed;color:#b54708;border-color:#fedf89}
+    .mainpanel{overflow:hidden;display:flex;flex-direction:column;min-height:0;height:100%}
+    .builder{padding:6px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1.35fr .75fr;gap:6px;flex:0 0 auto}
+    .zones{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .dropzone{min-height:34px;background:var(--drop);border:1px dashed #9eb7d2;border-radius:8px;padding:4px}
+    .dropzone.dragover{background:#e8f4ff;border-color:#1d6fa3}
+    .zone-title{font-weight:800;color:#17375e;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:10px}
+    .zone-help{font-size:8px;color:var(--muted);font-weight:500}
+    .chips{display:flex;flex-wrap:wrap;gap:3px;min-height:20px}
+    .chip{background:var(--chip);border:1px solid var(--chipline);color:#123b63;border-radius:999px;padding:2px 5px;display:inline-flex;align-items:center;gap:3px;max-width:100%;font-size:9px;font-weight:700}
+    .chip .x{border:none;background:transparent;color:#355c86;padding:0;box-shadow:none;font-weight:900;line-height:1;cursor:pointer}
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start}
+    .option-block{border:1px solid #e2e8f0;border-radius:7px;padding:5px;background:#fbfdff}
+    .option-block h3{font-size:10px;margin:0 0 4px 0;color:#17375e}.option-block label{font-size:9px;font-weight:650;display:block;margin:2px 0;color:#344054}
+    .checks{display:grid;grid-template-columns:1fr 1fr;gap:1px 5px}.checks label{font-weight:600}
+    .statusbar{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:4px 8px;background:#fbfdff;border-bottom:1px solid var(--line);font-size:9px;color:#344054}
+    .progress{height:7px;background:#e5e7eb;border-radius:999px;overflow:hidden;min-width:120px;flex:1;max-width:360px}.progress>div{height:100%;background:linear-gradient(90deg,#0c6f91,#22c55e);width:0%}
+    .worktabs{display:flex;gap:4px;padding:4px 8px;border-bottom:1px solid var(--line);background:#fff}.worktab{padding:5px 8px;border-radius:7px;cursor:pointer;font-weight:800;color:#475467;font-size:10px}.worktab.active{background:#17375e;color:#fff}
+    .workspace{padding:5px;overflow:hidden;min-height:0;flex:1;display:flex;flex-direction:column}.pane{display:none;min-height:0}.pane.active{display:flex;flex-direction:column;min-height:0;flex:1}
+    .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+    .filter-card{border:1px solid #d8e4f2;border-radius:12px;background:#fff;padding:9px}.filter-card h4{margin:0 0 6px 0;font-size:13px;color:#17375e}.filter-actions{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.filter-card .catbox{max-height:190px;overflow:auto;border:1px solid #edf2f7;border-radius:8px;padding:5px;background:#fbfdff}.filter-card label{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:500;margin:2px 0;color:#344054}.filter-card input[type=text]{width:100%;font-size:12px;margin:4px 0}
+    .table-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:5px;flex:0 0 auto}.note{font-size:9px;color:var(--muted)}
+    .table-wrap{flex:1;min-height:0;max-height:none;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+    table.report{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:9px}
+    table.report th,table.report td{border-right:1px solid #d8e2ef;border-bottom:1px solid #d8e2ef;padding:3px 5px;white-space:nowrap;text-align:right;background:#fff;line-height:1.15}
+    table.report th{position:sticky;top:0;background:#eaf1fb;color:#17375e;z-index:5;font-weight:850;text-align:center}
+    table.report .rowhead,table.report .stathead{position:sticky;left:0;text-align:left;background:#f8fbff;z-index:6;font-weight:750;color:#17375e;min-width:140px;max-width:260px;white-space:normal}
+    table.report .stathead{left:140px;min-width:80px;max-width:95px;color:#475467;background:#fbfdff;font-weight:650}
+    table.report thead .rowhead,table.report thead .stathead{z-index:12;background:#dceafd}
+    table.report tbody tr:hover td{background:#fffdf5}.mutedrow td{background:#f9fafb!important;color:#475467;font-weight:750}.sectionrow td{background:#eaf1fb!important;color:#17375e!important;font-weight:900;text-align:left!important}.sectioncell{position:sticky;left:0;z-index:7}.totalrow td{background:#fff7ed!important;color:#7c2d12!important;font-weight:850}.baserow td{background:#ecfdf3!important;color:#064e3b!important;font-weight:900}.lowbase{color:#b42318;font-weight:800}.sigup{color:#027a48;font-weight:900}.sigdown{color:#b42318;font-weight:900}.sigmark{font-size:8px;margin-left:2px}.viz-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:5px}.viz-card{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px;margin-bottom:6px}.viz-row{display:grid;grid-template-columns:150px 1fr;gap:6px;margin:3px 0;align-items:center}.viz-label{font-weight:750;color:#17375e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.viz-barline{display:flex;gap:3px;align-items:end;height:32px}.viz-bar{width:18px;background:#8fb7df;border:1px solid #6c96c0;border-radius:3px 3px 0 0;position:relative}.viz-bar span{position:absolute;bottom:100%;left:-4px;font-size:8px;white-space:nowrap}.group-list{max-height:58px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#fff;padding:3px;margin-top:4px}.group-item{display:flex;justify-content:space-between;gap:4px;border-bottom:1px solid #eef2f7;padding:2px 0}.group-item:last-child{border-bottom:0}
+    .empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed #ccd7e4;border-radius:8px;background:#fbfdff;flex:1;min-height:120px;font-size:10px}
+    .brand-controls{display:grid;grid-template-columns:minmax(190px,260px) minmax(180px,230px) minmax(180px,230px);gap:6px;margin-bottom:5px;flex:0 0 auto}.brand-group-list{max-height:120px;overflow:auto;border:1px solid var(--line);border-radius:7px;padding:4px;background:#fff}.brand-group-list label{display:flex;align-items:center;gap:4px;font-size:9px;margin:2px 0;font-weight:600}.small{font-size:9px;color:var(--muted)}
+    .pill{padding:2px 6px;border-radius:999px;background:#eef2f6;color:#344054;font-size:9px;font-weight:800}.ok{color:#027a48}.err{color:#b42318}.hidden{display:none!important}
+    .locked-stats{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0 4px 0}.locked-stat{font-size:11px;font-weight:800;color:#064e3b;background:#ecfdf3;border:1px solid #abefc6;border-radius:999px;padding:4px 8px}
+    .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100}.modal.active{display:flex}.modal .box{background:#fff;border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.25);max-width:900px;max-height:82vh;overflow:auto;padding:16px;border:1px solid var(--line)}.modal pre{background:#0b1220;color:#d6e4ff;padding:12px;border-radius:10px;overflow:auto;max-height:55vh}.right{margin-left:auto}
+
+    .var-title{font-size:10px}
+    input[type=checkbox]{width:10px;height:10px;vertical-align:middle}
+    #decimals,#lowBase,#brandDecimals,#rowSort,#colSort,#superSort,#brandTopVar,#brandTopSort,#sigThreshold,#sigMode,#vizType,#vizStat,#vizLimit{height:24px}
+    #brandPane{overflow:hidden}
+    #brandOut.table-wrap{flex:1;min-height:260px;overflow:auto}
+    #crossOut.table-wrap{flex:1;min-height:360px;overflow:auto}
+    @media(max-width:1000px){body{overflow:auto;display:block;height:auto}.layout{grid-template-columns:1fr;overflow:visible}.builder{grid-template-columns:1fr}.options{grid-template-columns:1fr}.zones{grid-template-columns:1fr}aside{min-height:360px;height:auto}.var-list{max-height:360px}.toolbar{position:static}.workspace{min-height:420px}}
+  
+/* ===== Compact 3-column layout + panel visibility controls ===== */
+.layout{grid-template-columns:210px minmax(720px,1fr) 350px;gap:6px;padding:6px;align-items:stretch}
+.variablespanel{min-width:0}.mainpanel{min-width:0}.optionspanel{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden}.options-title{font-size:11px;font-weight:900;color:#17375e;padding:6px 8px;border-bottom:1px solid var(--line);background:#fbfdff}.optionspanel .options{display:flex;flex-direction:column;gap:5px;padding:6px;overflow:auto;min-height:0}.optionspanel .option-block{padding:6px;border-radius:7px;margin:0;background:#fbfdff}.optionspanel .option-block h3{font-size:10px;margin:0 0 4px 0}.optionspanel .option-block label{font-size:9px;margin:2px 0}.optionspanel select,.optionspanel input[type=text],.optionspanel input[type=number]{height:22px;padding:2px 5px;font-size:9px}.optionspanel .small{font-size:8px;line-height:1.25}.optionspanel .checks{grid-template-columns:1fr 1fr;gap:1px 4px}.optionspanel button{padding:3px 6px;font-size:9px}.optionspanel .group-list{max-height:76px;overflow:auto;font-size:8px}.optionspanel .group-item{gap:2px;padding:2px 0}
+.builder{padding:5px;display:block;flex:0 0 auto;min-height:0}.builder>div:first-child{min-width:0}.zones{grid-template-columns:repeat(5,minmax(120px,1fr));gap:5px}.dropzone{min-height:58px;padding:4px}.zone-title{font-size:9px;margin-bottom:2px}.zone-help{font-size:7px}.chips{min-height:22px}.chip{font-size:8px;padding:2px 5px}.filter-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:5px;margin-top:5px;max-height:170px;overflow:auto}.filter-card{padding:6px;border-radius:8px}.filter-card h4{font-size:10px;margin-bottom:4px}.filter-card label{font-size:9px}.filter-card .catbox{max-height:110px}.statusbar{padding:3px 8px}.worktabs{padding:4px 8px}.workspace{padding:5px;min-height:0;flex:1}.table-actions{margin-bottom:4px}#tableOut.table-wrap,#crossOut.table-wrap{min-height:0;flex:1}.empty{min-height:0}
+body.hide-vars .variablespanel{display:none}body.hide-options .optionspanel{display:none}body.hide-builder .builder{display:none}body.hide-builder #filterPanel{display:none}body.hide-vars:not(.hide-options) .layout{grid-template-columns:minmax(720px,1fr) 350px}body.hide-options:not(.hide-vars) .layout{grid-template-columns:210px minmax(720px,1fr)}body.hide-vars.hide-options .layout{grid-template-columns:1fr}body.table-focus header{display:none}body.table-focus .toolbar>*:not(#focusBtn):not(#resetLayoutBtn){display:none!important}body.table-focus .toolbar{padding:4px 8px}body.table-focus .layout{grid-template-columns:1fr;padding:0;gap:0}body.table-focus .variablespanel,body.table-focus .optionspanel,body.table-focus .builder,body.table-focus #filterPanel,body.table-focus .statusbar,body.table-focus .worktabs{display:none!important}body.table-focus .mainpanel{grid-column:1/-1;border:none;border-radius:0;box-shadow:none}body.table-focus .workspace{padding:2px}body.table-focus .table-actions{padding:4px;background:#fff;border-bottom:1px solid var(--line)}body.table-focus #tableOut.table-wrap{border-radius:0;min-height:calc(100vh - 80px)}
+@media(max-width:1200px){.layout{grid-template-columns:190px minmax(520px,1fr) 320px}.zones{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){body{overflow:auto;display:block;height:auto}.layout{grid-template-columns:1fr!important;overflow:visible}.optionspanel{height:auto;min-height:320px}.zones{grid-template-columns:1fr 1fr}.workspace{min-height:520px}}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Survey Report Builder v16 Embedded</h1>
+  <div class="sub">IBM-style crosstabs with the v15 embedded sample data loaded automatically; data stays in this local HTML file.</div>
+</header>
+<div class="toolbar">
+  <span class="pill"><b>Embedded CSV:</b> Sample Data.csv</span>
+  <select id="headerMode" class="hidden"><option value="one" selected>One header row</option></select>
+  <button id="toggleVarsBtn" type="button">Hide Variables</button>
+  <button id="toggleBuilderBtn" type="button">Hide Builder</button>
+  <button id="toggleOptionsBtn" type="button">Hide Options</button>
+  <button id="focusBtn" type="button" class="warn">Table Focus</button>
+  <button id="resetLayoutBtn" type="button">Reset Layout</button>
+  <button id="quickWaveBtn" disabled>Add WAVE to SuperTop</button><button id="quickWaveTopBtn" disabled>Add WAVE to Top</button>
+  <button id="saveSetupBtn" disabled>Save Setup</button>
+  <label class="btn">Load Setup <input id="setupInput" type="file" accept="application/json,.json" class="hidden" /></label>
+  <button id="helpBtn" class="warn">Help</button>
+</div>
+<div class="layout">
+  <aside class="variablespanel">
+    <div class="side-head">
+      <strong>Variables and MR groups</strong>
+      <div class="small">Drag variables into Rows, SuperSide, Top, SuperTop, or Filters. Double-click adds to Rows.</div>
+      <input id="varSearch" type="text" placeholder="Search S2a, Gender, Brand, WAVE..." />
+    </div>
+    <div class="tabs"><div class="tab active" data-list="all">All</div><div class="tab" data-list="vars">Single</div><div class="tab" data-list="groups">MR/Grid</div><div class="tab" data-list="bi">BI</div></div>
+    <div id="varList" class="var-list"><div class="empty">Embedded data is loading...</div></div>
+  </aside>
+  <main class="mainpanel">
+    <section class="builder">
+      <div>
+        <div class="zones">
+          <div class="dropzone" data-zone="rows"><div class="zone-title">Side / Rows <span class="zone-help">Questions</span></div><div id="zone-rows" class="chips"></div></div>
+          <div class="dropzone" data-zone="superside"><div class="zone-title">SuperSide <span class="zone-help">Each option + side</span></div><div id="zone-superside" class="chips"></div></div>
+          <div class="dropzone" data-zone="cols"><div class="zone-title">Top / Columns <span class="zone-help">Flat banners</span></div><div id="zone-cols" class="chips"></div></div>
+          <div class="dropzone" data-zone="super"><div class="zone-title">SuperTop <span class="zone-help">Nested columns</span></div><div id="zone-super" class="chips"></div></div>
+          <div class="dropzone" data-zone="filters"><div class="zone-title">Filters <span class="zone-help">Limit base</span></div><div id="zone-filters" class="chips"></div></div>
+        </div>
+        <div id="filterPanel" class="filter-grid"></div>
+      </div>
+      
+    </section>
+    <div class="statusbar">
+      <span id="statusText">Embedded data is loading...</span>
+      <div class="progress"><div id="progressFill"></div></div>
+      <span id="dataInfo" class="pill">0 rows</span>
+      <span id="speedInfo" class="pill">Ready</span>
+    </div>
+    <div class="worktabs"><div class="worktab active" data-pane="crossPane">Crosstab</div><div class="worktab" data-pane="vizPane">Visualization</div><div class="worktab" data-pane="brandPane">Brand Imagery</div><div class="worktab" data-pane="dictPane">Dictionary</div></div>
+    <section class="workspace">
+      <div id="crossPane" class="pane active">
+        <div class="table-actions">
+          <button id="exportCsvBtn" disabled>Export table CSV</button>
+          <button id="copyBtn" disabled>Copy table</button>
+          <button id="printBtn" disabled>Print / Save PDF</button>
+          <span id="tableSummary" class="note">Embedded data loads automatically; build a table using the drop zones.</span>
+        </div>
+        <div id="tableOut" class="empty">No crosstab yet.</div>
+      </div>
+      <div id="vizPane" class="pane">
+        <div class="viz-controls">
+          <label>Visualization <select id="vizType"><option value="bar">Bar chart</option><option value="heatmap">Heatmap table</option></select></label>
+          <label>Statistic <select id="vizStat"><option value="Total %">Total %</option><option value="Column %">Column %</option><option value="Row %">Row %</option><option value="Weighted n">Weighted n</option><option value="Unweighted n">Unweighted n</option></select></label>
+          <label>Rows <input id="vizLimit" type="number" min="1" max="100" value="20" style="width:60px" /></label>
+          <button id="renderVizBtn">Render visualization</button>
+          <span class="note">Uses the latest crosstab result.</span>
+        </div>
+        <div id="vizOut" class="empty">Run a crosstab first, then render a chart.</div>
+      </div>
+      <div id="brandPane" class="pane">
+        <div class="brand-controls">
+          <div class="option-block">
+            <h3>Brand groups</h3>
+            <div class="small">For GSM-style BI_1_1, BI_1_2... groups, each BI_x group is treated as one brand and child variables are attributes.</div>
+            <div class="filter-actions"><button id="autoBiBtn" disabled>Auto-select BI groups</button><button id="clearBiBtn" disabled>Clear</button></div>
+            <div id="brandGroupList" class="brand-group-list"><div class="empty">Load data first.</div></div>
+          </div>
+          <div class="option-block">
+            <h3>Brand metric</h3>
+            <label>Metric<select id="brandMetric" style="width:100%"><option value="selectedPct">Selected % / association %</option><option value="mean">Mean score</option><option value="index">Index vs row average</option><option value="validPct">Valid/non-zero %</option></select></label>
+            <label>Selected values <input id="brandSelectedValues" type="text" placeholder="blank = any non-zero text/value" style="width:100%" /></label>
+            <label>Decimals <input id="brandDecimals" type="number" min="0" max="4" value="1" style="width:80px" /></label>
+            <label><input id="brandUseFilters" type="checkbox" checked /> Use the same filters as crosstab</label>
+          </div>
+          <div class="option-block">
+            <h3>Brand Top / banner</h3>
+            <label>Top variable<select id="brandTopVar" style="width:100%"><option value="">None / Total only</option></select></label>
+            <label>Top sort<select id="brandTopSort" style="width:100%"><option value="file">File/category order</option><option value="az">A to Z</option><option value="za">Z to A</option></select></label>
+            <div class="small">Example: choose WAVE, SEC, Region, or Gender to show brand imagery under each top value.</div>
+            <button id="runBrandBtn" class="good" disabled style="width:100%;margin-top:5px">Run Brand Imagery</button>
+            <button id="exportBrandBtn" disabled style="width:100%;margin-top:6px">Export Brand CSV</button>
+          </div>
+        </div>
+        <div id="brandOut" class="empty">No brand imagery table yet.</div>
+      </div>
+      <div id="dictPane" class="pane">
+        <div class="table-actions"><button id="exportDictBtn" disabled>Export dictionary CSV</button><span class="note">Detected variables and multiple-response groups.</span></div>
+        <div id="dictOut" class="empty">Load data first.</div>
+      </div>
+    </section>
+  </main>
+  <aside class="optionspanel">
+    <div class="options-title">Options</div>
+    <div class="options">
+        <div class="option-block">
+          <h3>Weight and options</h3>
+          <label>Weight variable<select id="weightSelect" style="width:100%"><option value="">None</option></select></label>
+          <div class="small">SC and MC/MR questions are detected automatically. MC checkbox groups now expand to their response rows even when cells contain 1/0 or response text.</div>
+          <label><input id="includeMissing" type="checkbox" /> Include missing as category</label>
+          <h3 style="margin-top:6px">Sort order</h3><div class="small">Side can sort rows by the Total/Base column value. Top and SuperTop sort their category labels.</div>
+          <label>Side row sort<select id="rowSort" style="width:100%"><option value="file">File/category order</option><option value="value_desc">Total value high to low</option><option value="value_asc">Total value low to high</option><option value="az">Label A to Z</option><option value="za">Label Z to A</option></select></label>
+          <label>Top category sort<select id="colSort" style="width:100%"><option value="file">File/category order</option><option value="az">A to Z</option><option value="za">Z to A</option></select></label>
+          <label>SuperTop sort<select id="superSort" style="width:100%"><option value="file">File/category order</option><option value="az">A to Z</option><option value="za">Z to A</option></select></label>
+        </div>
+        <div class="option-block">
+          <h3>Show statistics</h3>
+          <div class="checks">
+            <label><input id="statUw" type="checkbox" /> Unweighted n</label>
+            <label><input id="statW" type="checkbox" /> Weighted n</label>
+            <label><input id="statRow" type="checkbox" /> Row %</label>
+            <label><input id="statCol" type="checkbox" /> Column %</label>
+            <label><input id="statTotal" type="checkbox" /> Total %</label>
+            <label><input id="statBaseUw" type="checkbox" /> Question unweighted base</label>
+          </div>
+          <label>Decimals <input id="decimals" type="number" min="0" max="4" value="1" style="width:70px" /></label>
+          <label>Low base warning <input id="lowBase" type="number" min="0" value="30" style="width:90px" /></label>
+          <h3 style="margin-top:5px">Significance</h3>
+          <label><input id="sigEnable" type="checkbox" /> Show significance markers</label>
+          <label>Confidence<select id="sigThreshold" style="width:100%"><option value="1.645">90%</option><option value="1.96" selected>95%</option><option value="2.576">99%</option></select></label>
+          <label>Compare<select id="sigMode" style="width:100%"><option value="total">Each column vs Total</option><option value="previous">Each column vs previous column</option></select></label>
+          <h3 style="margin-top:5px">Response groups / nets</h3>
+          <label>Apply to<select id="groupAxis" style="width:100%;margin-bottom:3px"><option value="side">Side / Rows</option><option value="top">Top / Columns</option><option value="supertop">SuperTop</option><option value="superside">SuperSide</option></select></label>
+          <label>Mode<select id="groupMode" style="width:100%;margin-bottom:3px"><option value="keepmerge">Keep originals + add merged option</option><option value="mergeonly">Merge only / hide originals</option></select></label>
+          <input id="groupName" type="text" placeholder="Group name e.g. Jazz/Warid" style="width:100%;margin-bottom:3px" />
+          <input id="groupItems" type="text" placeholder="Responses e.g. Jazz, Warid" style="width:100%;margin-bottom:3px" />
+          <button id="addGroupBtn" type="button" style="width:100%">Add / update merged option</button>
+          <div id="groupList" class="group-list"><span class="small">No custom groups.</span></div>
+          <button id="runBtn" class="good" disabled style="width:100%;margin-top:6px">Run Crosstab</button>
+        </div>
+      </div>
+  </aside>
+</div>
+<div id="modal" class="modal"><div class="box"><button id="closeModal" class="right">Close</button><h2>How to use</h2><div id="modalBody"></div></div></div>
+
+<script id="workerScript" type="javascript/worker">
+'use strict';
+let STATE = null;
+const US = String.fromCharCode(31), RS = String.fromCharCode(30);
+function send(type, payload){ self.postMessage(Object.assign({type:type}, payload||{})); }
+function clean(v){ if(v == null) return ''; v = String(v); if(v.charCodeAt(0) === 65279) v = v.slice(1); return v.trim(); }
+function isMissingRaw(v){ const s = clean(v); if(s === '') return true; const l = s.toLowerCase(); return l === 'na' || l === 'n/a' || l === 'null' || l === 'undefined' || l === '.'; }
+function isZeroish(v){ const s = clean(v); if(s === '') return true; const l = s.toLowerCase(); return l === '0' || l === 'no' || l === 'none' || l === 'false' || l === 'not selected' || l === 'not mentioned' || l === 'not applicable'; }
+function countDelim(line, d){ let q=false,c=0; for(let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){ if(q && line[i+1]==='"'){ i++; } else q=!q; } else if(!q && ch===d){ c++; } } return c; }
+function detectDelimiter(line){ const ds=[',','\t',';','|']; let best=',', max=-1; for(const d of ds){ const c=countDelim(line,d); if(c>max){ max=c; best=d; } } return best; }
+function parseCSVLine(line, delim){
+  if(line == null) return [];
+  if(line.endsWith('\r')) line=line.slice(0,-1);
+  if(line.indexOf('"') < 0){ const a=line.split(delim); for(let i=0;i<a.length;i++) a[i]=clean(a[i]); return a; }
+  const out=[]; let cur='', q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(q && line[i+1]==='"'){ cur+='"'; i++; }
+      else q=!q;
+    } else if(ch===delim && !q){ out.push(clean(cur)); cur=''; }
+    else cur += ch;
+  }
+  out.push(clean(cur));
+  return out;
+}
+function splitHeader(h){
+  h = clean(h); if(!h) return {id:'', label:''};
+  const idx = h.indexOf(':');
+  if(idx > 0 && idx < 60){
+    const left = clean(h.slice(0,idx)); const right = clean(h.slice(idx+1));
+    if(/^[A-Za-z_][A-Za-z0-9_#\-\.]*$/.test(left)) return {id:left, label:h, shortLabel:right || h};
+  }
+  return {id:h, label:h, shortLabel:h};
+}
+function makeUnique(names){
+  const seen = new Map();
+  return names.map((n,i)=>{
+    n = clean(n) || ('V' + (i+1));
+    let base = n, k = seen.get(base) || 0;
+    if(k){ while(seen.has(n)){ k++; n = base + '_' + k; } }
+    seen.set(base, k+1); seen.set(n, 1);
+    return n;
+  });
+}
+function looksLikeIdRow(labels, ids){
+  const n = Math.min(labels.length, ids.length); if(!n) return false;
+  let matches=0, possible=0, idish=0, colon=0;
+  for(let i=0;i<n;i++){
+    const p = splitHeader(labels[i]); const a=clean(p.id).toLowerCase(); const b=clean(ids[i]).toLowerCase();
+    if(labels[i].indexOf(':') >= 0) colon++;
+    if(/^[a-z_][a-z0-9_#\-\.]*$/i.test(clean(ids[i]))) idish++;
+    if(a && b){ possible++; if(a === b || clean(labels[i]).toLowerCase() === b) matches++; }
+  }
+  return (matches >= Math.max(8, possible * 0.30)) || (colon/n > 0.20 && idish/n > 0.65);
+}
+class EncodedColumn{
+  constructor(cap){ this.map=new Map(); this.labels=['']; this.map.set('',0); this.data=new Int32Array(cap); this.unique=1; }
+  grow(){ const n = new Int32Array(this.data.length * 2); n.set(this.data); this.data = n; }
+  push(row, raw){ if(row >= this.data.length) this.grow(); raw = clean(raw); let code=this.map.get(raw); if(code === undefined){ code=this.labels.length; this.map.set(raw,code); this.labels.push(raw); this.unique=this.labels.length; } this.data[row]=code; }
+  raw(row){ return this.labels[this.data[row]] || ''; }
+}
+function commonStart(a,b){ let i=0; const n=Math.min(a.length,b.length); while(i<n && a[i]===b[i]) i++; return a.slice(0,i); }
+function afterColon(s){ s=clean(s); const idx=s.indexOf(':'); return idx>=0?clean(s.slice(idx+1)):s; }
+function looksLikeVariableIdValue(v){
+  const s = clean(v);
+  return /^[A-Za-z][A-Za-z0-9]*_[0-9]+$/.test(s) || /^Q[0-9A-Za-z]*_[0-9]+$/i.test(s);
+}
+function firstNonZeroLabel(col){
+  for(let i=0;i<col.labels.length;i++){
+    const v=col.labels[i];
+    if(isZeroish(v) || looksLikeVariableIdValue(v)) continue;
+    return v;
+  }
+  return '';
+}
+function responseLabelFromVariable(v, fallback){
+  let s = afterColon(v && v.label ? v.label : '');
+  s = clean(s);
+  // Keep readable header text, but remove repeated variable id fragments when possible.
+  const id = clean(v && v.id ? v.id : '');
+  const base = id.replace(/_[0-9]+$/,'');
+  if(base){
+    const re = new RegExp('^' + base.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '[\\s.:\\-]+','i');
+    s = clean(s.replace(re,''));
+  }
+  return s || fallback || id || 'Response';
+}
+function detectGroupMode(g){
+  let maxUniq=0, textDichotomyCols=0, smallBinaryCols=0;
+  for(const idx of g.indices){
+    const vals = STATE.columns[idx].labels.filter(v=>!isMissingRaw(v));
+    maxUniq = Math.max(maxUniq, vals.length);
+    const nz = vals.filter(v=>!isZeroish(v));
+    if(vals.length <= 3) smallBinaryCols++;
+    if(nz.length === 1 && vals.length <= 3) textDichotomyCols++;
+  }
+  if(textDichotomyCols >= Math.max(2, g.indices.length * 0.70)) return 'dichotomy';
+  if(maxUniq <= 3 && smallBinaryCols === g.indices.length) return 'dichotomy';
+  return 'slots';
+}
+function inferGroups(){
+  const map = new Map();
+  for(const v of STATE.variables){
+    const m = v.id.match(/^(.+)_([0-9]+)$/);
+    if(!m) continue;
+    const prefix=m[1], suffix=m[2];
+    if(!map.has(prefix)) map.set(prefix,{kind:'group', key:'G:'+prefix, id:prefix, label:prefix, indices:[], suffixes:[], type:'group'});
+    const g=map.get(prefix); g.indices.push(v.index); g.suffixes.push(suffix);
+  }
+  const groups=[];
+  for(const g of map.values()){
+    if(g.indices.length < 2) continue;
+    const firstVar = STATE.variables[g.indices[0]];
+    let brand = afterColon(firstVar.label);
+    let label = g.id;
+    if(/^BI_[0-9]+$/i.test(g.id) && brand && brand !== firstVar.id) label = g.id + ' - ' + brand;
+    else {
+      let common = STATE.variables[g.indices[0]].label;
+      for(const idx of g.indices.slice(1)) common = commonStart(common, STATE.variables[idx].label);
+      common = clean(common).replace(/[\s:_\-]+$/,'');
+      if(common && common.length >= 3 && common.length < 80) label = common;
+    }
+    g.label = label; g.brandLabel = brand || label; g.mode = detectGroupMode(g); g.isBI = /^BI_[0-9]+$/i.test(g.id);
+    g.childLabels = g.indices.map((idx,j)=>{
+      const v=STATE.variables[idx]; const col=STATE.columns[idx];
+      return responseLabelFromVariable(v, firstNonZeroLabel(col) || String(j+1));
+    });
+    groups.push(g);
+  }
+  groups.sort((a,b)=>{
+    const ai=a.isBI?0:1, bi=b.isBI?0:1; if(ai!==bi) return ai-bi;
+    return naturalCompare(a.id,b.id);
+  });
+  STATE.groups = groups;
+  STATE.groupMap = new Map(groups.map(g=>[g.key,g]));
+}
+function naturalCompare(a,b){ return String(a).localeCompare(String(b), undefined, {numeric:true, sensitivity:'base'}); }
+function initColumns(labelRow, idRow){
+  const n = labelRow.length;
+  let ids=[], labels=[];
+  for(let i=0;i<n;i++){
+    const p = splitHeader(labelRow[i]);
+    let id = idRow ? clean(idRow[i]) : p.id;
+    let label = clean(labelRow[i]) || id;
+    ids.push(id || p.id || ('V'+(i+1))); labels.push(label);
+  }
+  ids = makeUnique(ids);
+  STATE.variables = ids.map((id,i)=>({kind:'var', key:'V:'+i, index:i, id:id, label:labels[i], type:'single', unique:0}));
+  const cap = 8192;
+  STATE.columns = Array.from({length:n},()=>new EncodedColumn(cap));
+}
+function ingestRow(vals){
+  const r = STATE.rowCount, n = STATE.columns.length;
+  for(let c=0;c<n;c++) STATE.columns[c].push(r, c < vals.length ? vals[c] : '');
+  STATE.rowCount++;
+}
+function buildMeta(){
+  for(const v of STATE.variables) v.unique = STATE.columns[v.index].labels.length;
+  inferGroups();
+  return {
+    fileName:STATE.fileName, rowCount:STATE.rowCount, colCount:STATE.columns.length,
+    delimiter:STATE.delimiter, headerUsed:STATE.headerUsed, warnings:STATE.warnings,
+    variables:STATE.variables.map(v=>({kind:'var', key:v.key, index:v.index, id:v.id, label:v.label, unique:v.unique, type:'single'})),
+    groups:STATE.groups.map(g=>({kind:'group', key:g.key, id:g.id, label:g.label, type:'group', count:g.indices.length, mode:g.mode, isBI:g.isBI, brandLabel:g.brandLabel}))
+  };
+}
+function parseFile(file, opts){
+  const t0 = Date.now();
+  STATE = {fileName:file.name, rowCount:0, columns:[], variables:[], groups:[], groupMap:new Map(), delimiter:',', headerUsed:'', warnings:[]};
+  const reader = new FileReaderSync();
+  const chunkSize = opts.chunkSize || 4 * 1024 * 1024;
+  let pos=0, carry='', labelRow=null, initialized=false, lastPct=-1;
+  function processLine(line){
+    if(line.endsWith('\r')) line=line.slice(0,-1);
+    if(!labelRow && clean(line)==='') return;
+    if(labelRow === null){ STATE.delimiter = detectDelimiter(line); labelRow = parseCSVLine(line, STATE.delimiter); return; }
+    const vals = parseCSVLine(line, STATE.delimiter);
+    if(!initialized){
+      const mode = opts.headerMode || 'auto';
+      const looksId = looksLikeIdRow(labelRow, vals);
+      const idRow = mode === 'two' || (mode === 'auto' && looksId);
+      initColumns(labelRow, idRow ? vals : null);
+      STATE.headerUsed = idRow ? 'labels_plus_variable_ids' : 'one_header_row';
+      initialized = true;
+      if(!idRow && vals.length){
+        if(mode === 'one' && looksId){
+          STATE.warnings.push('Skipped an apparent variable-ID row after the header. Use Auto mode for this file when possible.');
+        } else ingestRow(vals);
+      }
+      return;
+    }
+    if(vals.length === 1 && vals[0] === '') return;
+    ingestRow(vals);
+  }
+  try{
+    while(pos < file.size){
+      const end = Math.min(pos + chunkSize, file.size);
+      const text = reader.readAsText(file.slice(pos,end), 'utf-8');
+      pos = end;
+      const all = carry + text;
+      const lines = all.split('\n');
+      carry = lines.pop();
+      for(const line of lines) processLine(line);
+      const pct = Math.floor(pos / file.size * 100);
+      if(pct !== lastPct && (pct % 2 === 0 || pct === 100)){ lastPct = pct; send('progress',{pct:pct, rows:STATE.rowCount, message:'Loading and compacting columns'}); }
+    }
+    if(carry) processLine(carry);
+    if(labelRow && !initialized){ initColumns(labelRow, null); STATE.headerUsed='one_header_row'; }
+    const meta = buildMeta();
+    send('loaded',{meta:meta, elapsedMs:Date.now()-t0});
+  }catch(err){ send('error',{message:String(err && err.message ? err.message : err), stack:String(err && err.stack ? err.stack : '')}); }
+}
+function parseSelectedSet(s){ const arr=String(s||'').split(/[;,\n]/).map(x=>clean(x).toLowerCase()).filter(Boolean); return new Set(arr); }
+function selectedByRule(raw, set){ const v=clean(raw); if(set && set.size) return set.has(v.toLowerCase()); return !isZeroish(v); }
+function groupMode(g, spec){ if(spec.mrMode && spec.mrMode !== 'auto') return spec.mrMode; return g.mode || 'slots'; }
+function getGroupCategories(g, spec){
+  const mode = groupMode(g, spec||{});
+  if(mode === 'slots'){
+    const seen=new Set(), out=[];
+    for(const idx of g.indices){
+      for(const v of STATE.columns[idx].labels){
+        if(isZeroish(v) || looksLikeVariableIdValue(v)) continue;
+        if(!seen.has(v)){ seen.add(v); out.push({key:v,label:v}); }
+      }
+    }
+    // If a group was wrongly detected as slots but each child is actually a checkbox column,
+    // fall back to child-column categories so the MC question is never blank.
+    if(!out.length || out.length > Math.max(30, g.indices.length * 3)){
+      return g.indices.map((idx,j)=>({key:String(idx), label:g.childLabels[j] || responseLabelFromVariable(STATE.variables[idx], STATE.variables[idx].id)}));
+    }
+    return out;
+  }
+  return g.indices.map((idx,j)=>({key:String(idx), label:g.childLabels[j] || responseLabelFromVariable(STATE.variables[idx], STATE.variables[idx].id)}));
+}
+function categoriesFor(entity, spec){
+  if(entity.kind === 'var'){
+    const col = STATE.columns[entity.index];
+    let arr = col.labels.map(v=>({key:v, label:v || '(Missing)', n:null}));
+    if(!spec || !spec.includeMissing) arr = arr.filter(x=>x.key !== '');
+    return arr;
+  }
+  const g = STATE.groupMap.get(entity.key); if(!g) return [];
+  return getGroupCategories(g, spec||{});
+}
+function getEntityValues(row, entity, spec, forFilter){
+  const includeMissing = forFilter || !!spec.includeMissing;
+  if(entity.kind === 'var'){
+    const col = STATE.columns[entity.index]; const raw = col.raw(row);
+    if(isMissingRaw(raw) && !includeMissing) return [];
+    return [{key:raw, label: raw || '(Missing)'}];
+  }
+  const g = STATE.groupMap.get(entity.key); if(!g) return [];
+  const mode = groupMode(g, spec); const out=[]; const selectedSet = parseSelectedSet(spec.selectedValues);
+  if(mode === 'slots'){
+    const seen=new Set();
+    for(const idx of g.indices){
+      const raw = STATE.columns[idx].raw(row);
+      if(isZeroish(raw) || looksLikeVariableIdValue(raw)) continue;
+      if(!seen.has(raw)){ seen.add(raw); out.push({key:raw,label:raw}); }
+    }
+    return out;
+  }
+  for(let j=0;j<g.indices.length;j++){
+    const idx = g.indices[j], raw = STATE.columns[idx].raw(row);
+    if(looksLikeVariableIdValue(raw)) continue;
+    if(selectedByRule(raw, selectedSet)) out.push({key:String(idx), label:g.childLabels[j] || responseLabelFromVariable(STATE.variables[idx], STATE.variables[idx].id)});
+  }
+  return out;
+}
+function makePaths(row, dims, spec, forFilter){
+  if(!dims || !dims.length) return [{key:'__total__', labels:['Total']}];
+  let paths=[{key:'', labels:[]}];
+  for(const ent of dims){
+    const vals = getEntityValues(row, ent, spec, forFilter);
+    if(!vals.length) return [];
+    const next=[];
+    for(const p of paths){
+      for(const v of vals){
+        next.push({key:(p.key?p.key+US:'') + ent.key + '=' + v.key, labels:p.labels.concat([v.label])});
+        if(next.length > (spec.pathLimit || 500)){ spec._truncated = true; break; }
+      }
+      if(next.length > (spec.pathLimit || 500)) break;
+    }
+    paths = next;
+  }
+  return paths.map(p=>({key:p.key || '__total__', labels:p.labels.length ? p.labels : ['Total']}));
+}
+function passFilters(row, spec){
+  if(!spec.filters || !spec.filters.length) return true;
+  for(const f of spec.filters){
+    if(!f.values || !f.values.length) continue;
+    const set = f._set || (f._set = new Set(f.values));
+    const vals = getEntityValues(row, f.entity, spec, true);
+    let ok=false; for(const v of vals){ if(set.has(v.key)){ ok=true; break; } }
+    if(!ok) return false;
+  }
+  return true;
+}
+function getWeight(row, spec){
+  if(spec.weightIndex === null || spec.weightIndex === undefined || spec.weightIndex === '') return 1;
+  const raw = STATE.columns[Number(spec.weightIndex)].raw(row);
+  const n = Number(String(raw).replace(/,/g,''));
+  return Number.isFinite(n) ? n : 1;
+}
+function acc(map, key, w, u){ const o=map.get(key); if(o){ o.w+=w; o.u+=u; } else map.set(key,{w:w,u:u}); }
+function reg(map, path){ if(!map.has(path.key)) map.set(path.key, path.labels); }
+function fmtNumber(n, dec, pct){ if(!Number.isFinite(n)) return ''; if(pct) return n.toFixed(dec) + '%'; if(Math.abs(n - Math.round(n)) < 0.000001) return String(Math.round(n)); return n.toFixed(dec); }
+
+function entityShortLabel(e){
+  if(!e) return 'Total';
+  let s = '';
+  if(e.kind === 'group') s = e.label || e.id || 'MR/Grid';
+  else s = e.id || e.label || 'Question';
+  s = clean(s);
+  if(s.length > 90) s = s.slice(0,87) + '...';
+  return s || 'Question';
+}
+function regInfo(map, path){ if(!map.has(path.key)) map.set(path.key, path); }
+function makeFlatRowPaths(row, dims, spec){
+  if(!dims || !dims.length) return [{key:'__total__', labels:['Total'], rowGroupKey:'__total__', rowGroupLabel:'Total', categoryLabel:'Total', rowText:'Total'}];
+  const out=[];
+  for(const ent of dims){
+    let vals = getEntityValues(row, ent, spec, false);
+    if(!vals.length && ent.kind === 'group'){
+      const g = STATE.groupMap.get(ent.key);
+      if(g){
+        vals=[];
+        for(let j=0;j<g.indices.length;j++){
+          const idx=g.indices[j], raw=STATE.columns[idx].raw(row);
+          if(!isZeroish(raw) && !looksLikeVariableIdValue(raw)) vals.push({key:String(idx), label:g.childLabels[j] || responseLabelFromVariable(STATE.variables[idx], STATE.variables[idx].id)});
+        }
+      }
+    }
+    if(!vals.length) continue;
+    const groupLabel = entityShortLabel(ent);
+    for(const v of vals){
+      out.push({key:ent.key+'='+v.key, labels:[groupLabel, v.label], rowEntityKey:ent.key, rowCategoryKey:v.key, rowGroupKey:ent.key, rowGroupLabel:groupLabel, categoryLabel:v.label, rowText:v.label});
+    }
+  }
+  return out;
+}
+
+function makeSuperSideRowPaths(row, superDims, rowDims, spec){
+  if(!superDims || !superDims.length) return makeFlatRowPaths(row, rowDims, spec);
+  const superPaths = makePaths(row, superDims, spec, false);
+  if(!superPaths.length) return [];
+  const rowPaths = (rowDims && rowDims.length) ? makeFlatRowPaths(row, rowDims, spec) : [{key:'__total__', labels:['Total'], rowEntityKey:'__total__', rowCategoryKey:'__total__', rowGroupKey:'__total__', rowGroupLabel:'Total', categoryLabel:'Total', rowText:'Total'}];
+  const out=[];
+  for(const sp of superPaths){
+    const ssLabel = (sp.labels || ['SuperSide']).join(' / ');
+    for(const rr of rowPaths){
+      out.push({key:'SS='+sp.key+US+rr.key, labels:[rr.rowGroupLabel || 'Question', ssLabel, rr.rowText || rr.categoryLabel || 'Total'], rowEntityKey:rr.rowEntityKey || rr.rowGroupKey, rowCategoryKey:rr.rowCategoryKey || rr.categoryLabel || rr.rowText, rowGroupKey:rr.rowGroupKey, rowGroupLabel:rr.rowGroupLabel, superSideKey:sp.key, superSideLabel:ssLabel, categoryLabel:rr.categoryLabel || rr.rowText || 'Total', rowText:rr.rowText || rr.categoryLabel || 'Total'});
+    }
+  }
+  return out;
+}
+
+function makeFlatColPaths(row, dims, spec){
+  const out=[{key:'__total__', labels:['Total'], bannerKey:'__total__', bannerLabel:'Total', categoryLabel:'Total', isTotal:true}];
+  if(!dims || !dims.length) return out;
+  for(const ent of dims){
+    const vals = getEntityValues(row, ent, spec, false);
+    if(!vals.length) continue;
+    const bannerLabel = entityShortLabel(ent);
+    for(const v of vals){
+      out.push({key:ent.key+'='+v.key, labels:[v.label], bannerKey:ent.key, bannerLabel:bannerLabel, categoryLabel:v.label, isTotal:false});
+    }
+  }
+  return out;
+}
+function sortedCategories(cats, mode){
+  const arr=(cats||[]).slice(); mode=mode||'file';
+  if(mode==='az') arr.sort((a,b)=>naturalCompare(a.label||a.key,b.label||b.key));
+  else if(mode==='za') arr.sort((a,b)=>naturalCompare(b.label||b.key,a.label||a.key));
+  return arr;
+}
+function sortedKeysByInfo(keys, getLabel, mode){
+  const arr=(keys||[]).slice(); mode=mode||'file';
+  if(mode==='az') arr.sort((a,b)=>naturalCompare(getLabel(a),getLabel(b)));
+  else if(mode==='za') arr.sort((a,b)=>naturalCompare(getLabel(b),getLabel(a)));
+  return arr;
+}
+function orderedRowKeys(rowMap, rows, spec){
+  spec = spec || {};
+  const superSides = spec.superSide || [];
+  if(!rows || !rows.length) return rowMap.has('__total__') ? ['__total__'] : [];
+  if(superSides && superSides.length){
+    const rowEntOrder=new Map(); (rows||[]).forEach((e,i)=>rowEntOrder.set(e.key,i));
+    const rowCatOrder=new Map();
+    for(const ent of rows){ const cats=sortedCategories(categoriesFor(ent, spec||{}), spec.rowSort||'file'); cats.forEach((c,i)=>rowCatOrder.set(ent.key+US+c.key,i)); }
+    const ssOrder=new Map();
+    for(const ent of superSides){ const cats=sortedCategories(categoriesFor(ent, spec||{}), spec.superSideSort||'file'); cats.forEach((c,i)=>ssOrder.set(String(c.label),i)); }
+    return Array.from(rowMap.keys()).sort((ka,kb)=>{
+      const a=rowMap.get(ka)||{}, b=rowMap.get(kb)||{};
+      const aq=rowEntOrder.has(a.rowGroupKey)?rowEntOrder.get(a.rowGroupKey):999999, bq=rowEntOrder.has(b.rowGroupKey)?rowEntOrder.get(b.rowGroupKey):999999;
+      if(aq!==bq) return aq-bq;
+      const as=ssOrder.has(String(a.superSideLabel||''))?ssOrder.get(String(a.superSideLabel||'')):999999, bs=ssOrder.has(String(b.superSideLabel||''))?ssOrder.get(String(b.superSideLabel||'')):999999;
+      if(as!==bs) return as-bs;
+      if(as===999999){ const c=naturalCompare(a.superSideLabel||'', b.superSideLabel||''); if(c) return c; }
+      const ar=rowCatOrder.has((a.rowGroupKey||'')+US+(a.rowCategoryKey||''))?rowCatOrder.get((a.rowGroupKey||'')+US+(a.rowCategoryKey||'')):999999;
+      const br=rowCatOrder.has((b.rowGroupKey||'')+US+(b.rowCategoryKey||''))?rowCatOrder.get((b.rowGroupKey||'')+US+(b.rowCategoryKey||'')):999999;
+      if(ar!==br) return ar-br;
+      return naturalCompare(a.rowText||ka,b.rowText||kb);
+    });
+  }
+  const keys=[], seen=new Set();
+  for(const ent of rows){ const cats=sortedCategories(categoriesFor(ent, spec || {}), spec.rowSort || 'file'); for(const c of cats){ const k=ent.key+'='+c.key; if(rowMap.has(k)&&!seen.has(k)){ keys.push(k); seen.add(k); } } }
+  let rest=Array.from(rowMap.keys()).filter(k=>!seen.has(k));
+  rest=sortedKeysByInfo(rest,k=>(rowMap.get(k)||{}).rowText||k,spec.rowSort||'az');
+  return keys.concat(rest);
+}
+function orderedColKeys(colMap, cols, spec){
+  const keys=[], seen=new Set();
+  if(colMap.has('__total__')){ keys.push('__total__'); seen.add('__total__'); }
+  for(const ent of (cols || [])){
+    const cats = sortedCategories(categoriesFor(ent, spec || {}), spec.colSort || 'file');
+    for(const c of cats){
+      const k = ent.key+'='+c.key;
+      if(colMap.has(k) && !seen.has(k)){ keys.push(k); seen.add(k); }
+    }
+  }
+  let rest = Array.from(colMap.keys()).filter(k=>!seen.has(k));
+  rest = sortedKeysByInfo(rest, k=>(colMap.get(k)||{}).categoryLabel || k, spec.colSort || 'az');
+  return keys.concat(rest);
+}
+function compute(spec){
+  const t0=Date.now(); spec = spec || {}; spec._truncated=false;
+  const cell=new Map(), colBase=new Map(), superBase=new Map(), rowMap=new Map(), colMap=new Map(), superMap=new Map();
+  const rowTotals=new Map(), colRespBaseAll=new Map(), colRespBaseGroup=new Map(), superRespBaseGroup=new Map(), colCaseBaseGroup=new Map(), superCaseBaseGroup=new Map();
+  let passed=0, used=0;
+  const rows = spec.rows || [], superSides = spec.superSide || [], cols = spec.cols || [], supers = spec.super || [];
+  const hasSuperDims = supers.length > 0;
+  const grandSuper = {key:'__grand__', labels:['Base'], isGrand:true};
+  const grandCol = {key:'__total__', labels:['Base'], bannerKey:'__base__', bannerLabel:'Base', categoryLabel:'Base', isTotal:true, isGrandColumn:true};
+
+  for(let r=0;r<STATE.rowCount;r++){
+    if(!passFilters(r,spec)) continue;
+    passed++;
+    const sp = makePaths(r, supers, spec, false); if(!sp.length) continue;
+    const cp = makeFlatColPaths(r, cols, spec); if(!cp.length) continue;
+    const rp = makeSuperSideRowPaths(r, superSides, rows, spec); if(!rp.length) continue;
+    used++;
+    const w = getWeight(r,spec), u=1;
+
+    const bundles=[];
+    if(hasSuperDims){
+      bundles.push({s:grandSuper, colPaths:[grandCol]});
+    }
+    for(const s of sp){
+      bundles.push({s:s, colPaths:cp});
+    }
+
+    for(const b of bundles){
+      const s=b.s;
+      regInfo(superMap, {key:s.key, labels:s.labels || ['Total'], isGrand:!!s.isGrand});
+      acc(superBase, s.key, w, u);
+      for(const c of b.colPaths){
+        if(!c.isGrandColumn) regInfo(colMap, c);
+        acc(colBase, s.key+RS+c.key, w, u);
+      }
+    }
+    for(const rr of rp) regInfo(rowMap, rr);
+    const groupSeenBase = new Set();
+    for(const rr of rp){
+      if(!groupSeenBase.has(rr.rowGroupKey)) groupSeenBase.add(rr.rowGroupKey);
+    }
+    for(const b of bundles){
+      const s=b.s;
+      for(const c of b.colPaths){
+        for(const gk of groupSeenBase){
+          acc(colCaseBaseGroup, s.key+RS+c.key+RS+gk, w, u);
+          if(c.isTotal) acc(superCaseBaseGroup, s.key+RS+gk, w, u);
+        }
+        for(const rr of rp){
+          acc(cell, s.key+RS+c.key+RS+rr.key, w, u);
+          acc(colRespBaseAll, s.key+RS+c.key, w, u);
+          acc(colRespBaseGroup, s.key+RS+c.key+RS+rr.rowGroupKey, w, u);
+          if(c.isTotal){
+            acc(rowTotals, s.key+RS+rr.key, w, u);
+            acc(superRespBaseGroup, s.key+RS+rr.rowGroupKey, w, u);
+          }
+        }
+      }
+    }
+  }
+
+  if(!superMap.size) superMap.set('__total__',{key:'__total__', labels:['Total']});
+  if(!colMap.size) colMap.set('__total__',{key:'__total__', labels:['Total'], bannerKey:'__total__', bannerLabel:'Total', categoryLabel:'Total', isTotal:true});
+  if(!rowMap.size) rowMap.set('__total__',{key:'__total__', labels:['Total'], rowGroupKey:'__total__', rowGroupLabel:'Total', categoryLabel:'Total', rowText:'Total'});
+
+  let superKeys=Array.from(superMap.keys()).filter(k=>k!=='__grand__');
+  superKeys = sortedKeysByInfo(superKeys, k=>((superMap.get(k)||{}).labels||[]).join(' / '), spec.superSort || 'file');
+  if(hasSuperDims && superMap.has('__grand__')) superKeys=['__grand__'].concat(superKeys);
+  const colKeys=orderedColKeys(colMap, cols, spec);
+  const rowKeys=orderedRowKeys(rowMap, rows, spec);
+  const columns=[];
+  for(const sk of superKeys){
+    const si = superMap.get(sk) || {labels:['Total']};
+    const keysForThisSuper = (hasSuperDims && sk === '__grand__') ? ['__total__'] : colKeys;
+    for(const ck of keysForThisSuper){
+      let ci = colMap.get(ck) || {labels:['Total'], bannerKey:'__total__', bannerLabel:'Total', categoryLabel:'Total', isTotal:true};
+      if(hasSuperDims && sk === '__grand__' && ck === '__total__') ci = grandCol;
+      columns.push({
+        superKey:sk,
+        superLabels:si.labels || ['Total'],
+        colKey:ck,
+        colLabels:ci.labels || [ci.categoryLabel || 'Total'],
+        bannerKey:ci.bannerKey || ck,
+        bannerLabel:ci.bannerLabel || ((ci.labels||[]).join(' / ') || 'Total'),
+        categoryLabel:ci.categoryLabel || ((ci.labels||[]).join(' / ') || 'Total'),
+        isTotal:!!ci.isTotal,
+        isGrand:sk === '__grand__'
+      });
+    }
+  }
+
+  const stats=[];
+  const stSpec = spec.stats || {};
+  if(stSpec.uw) stats.push({id:'uw', label:'Unweighted n'});
+  if(stSpec.w) stats.push({id:'w', label:'Weighted n'});
+  if(stSpec.rowPct) stats.push({id:'rowPct', label:'Row %'});
+  if(stSpec.colPct) stats.push({id:'colPct', label:'Column %'});
+  if(stSpec.totalPct) stats.push({id:'totalPct', label:'Total %'});
+  const dec = Math.max(0, Math.min(4, Number(spec.decimals || 1)));
+  const baseMode = 'cases';
+  const outRows=[];
+  function baseValueFor(col, statId){
+    if(statId === 'respBase') return colRespBaseAll.get(col.superKey+RS+col.colKey) || {w:0,u:0};
+    return colBase.get(col.superKey+RS+col.colKey) || {w:0,u:0};
+  }
+  function questionBaseValueFor(col, groupKey, statId){
+    if(statId === 'respBase') return colRespBaseGroup.get(col.superKey+RS+col.colKey+RS+groupKey) || {w:0,u:0};
+    return colCaseBaseGroup.get(col.superKey+RS+col.colKey+RS+groupKey) || {w:0,u:0};
+  }
+  // No overall top base row. Bases are shown inside each Side question block only.
+
+  const rowEntityByKey = new Map((rows || []).map(e=>[e.key, e]));
+  function isMrRowGroup(groupKey){
+    const e = rowEntityByKey.get(groupKey);
+    return !!(e && e.kind === 'group');
+  }
+  function pctDenominators(col, info){
+    // Survey-style rule:
+    // SC questions use the question's valid base for Column % so rows add to 100%.
+    // MR/Grid questions use respondent/case base by default, so rows may add to more than 100%.
+    // If the user chooses MR denominator = responses, MR uses response base instead.
+    const qCaseCol = colCaseBaseGroup.get(col.superKey+RS+col.colKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const qRespCol = colRespBaseGroup.get(col.superKey+RS+col.colKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const qCaseSuper = superCaseBaseGroup.get(col.superKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const qRespSuper = superRespBaseGroup.get(col.superKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const mr = isMrRowGroup(info.rowGroupKey);
+    return {
+      col: (mr && baseMode === 'responses') ? qRespCol : qCaseCol,
+      super: (mr && baseMode === 'responses') ? qRespSuper : qCaseSuper
+    };
+  }
+  function calcStatValue(o, col, info, statId, isTotalRow){
+    const crg = colRespBaseGroup.get(col.superKey+RS+col.colKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const srg = superRespBaseGroup.get(col.superKey+RS+info.rowGroupKey) || {w:0,u:0};
+    const rt = isTotalRow ? srg : (rowTotals.get(col.superKey+RS+info.rowKey) || {w:0,u:0});
+    const dens = pctDenominators(col, info);
+    let n=0, pct=false, den=0;
+    if(statId==='uw') n=o.u;
+    else if(statId==='w') n=o.w;
+    else if(statId==='rowPct'){ den = rt.w; n = den ? o.w/den*100 : NaN; pct=true; }
+    else if(statId==='colPct'){ den = dens.col.w; n = den ? o.w/den*100 : NaN; pct=true; }
+    else if(statId==='totalPct'){ den = dens.super.w; n = den ? o.w/den*100 : NaN; pct=true; }
+    const lowBaseSource = dens.col.u;
+    return {text:fmtNumber(n,dec,pct), raw:n, pct:pct, base:lowBaseSource};
+  }
+  const grouped=[]; const groupIndex=new Map();
+  for(const rk of rowKeys){
+    const info = rowMap.get(rk) || {labels:['Total'], rowGroupKey:'__total__', rowGroupLabel:'Total', categoryLabel:'Total', rowText:'Total'};
+    if(!groupIndex.has(info.rowGroupKey)){
+      groupIndex.set(info.rowGroupKey, grouped.length);
+      grouped.push({key:info.rowGroupKey, label:info.rowGroupLabel || 'Question', rows:[]});
+    }
+    info.rowKey = rk;
+    grouped[groupIndex.get(info.rowGroupKey)].rows.push({key:rk, info:info});
+  }
+  for(const group of grouped){
+    if(rows.length > 0){
+      outRows.push({isSection:true, rowText:group.label || 'Question', rowGroup:group.label || 'Question', stat:'', values:columns.map(()=>({text:''}))});
+      if(stSpec.baseUw){
+        outRows.push({rowLabels:[group.label,'Unweighted Base'], rowText:'Unweighted Base', rowGroup:group.label || '', stat:'', isQuestionBase:true, values:columns.map(col=>{ const b=questionBaseValueFor(col, group.key, 'baseUw'); return {text:fmtNumber(b.u,0,false), raw:b.u}; })});
+      }
+    }
+    for(const item of group.rows){
+      const rk=item.key; const info=item.info;
+      for(const st of stats){
+        const vals = columns.map(col=>{
+          const o = cell.get(col.superKey+RS+col.colKey+RS+rk) || {w:0,u:0};
+          return calcStatValue(o, col, info, st.id, false);
+        });
+        outRows.push({rowLabels:info.labels || [info.rowText], rowText:info.rowText || (info.labels||[]).join(' / '), rowGroup:info.rowGroupLabel || '', superSideLabel:info.superSideLabel || '', superSideKey:info.superSideKey || '', stat:st.label, values:vals});
+      }
+    }
+    if(rows.length > 0){
+      const totalInfo={rowGroupKey:group.key, rowGroupLabel:group.label, rowKey:null, rowText:'Total', categoryLabel:'Total'};
+      for(const st of stats){
+        const vals = columns.map(col=>{
+          const o = colRespBaseGroup.get(col.superKey+RS+col.colKey+RS+group.key) || {w:0,u:0};
+          return calcStatValue(o, col, totalInfo, st.id, true);
+        });
+        outRows.push({rowLabels:[group.label,'Total'], rowText:'Total', rowGroup:group.label || '', stat:st.label, isQuestionTotal:true, values:vals});
+      }
+    }
+  }
+  const warnings=[]; if(spec._truncated) warnings.push('Some respondent path combinations were truncated. Reduce MR variables in SuperTop or filters. Rows and Top are stacked/flat, not nested.');
+  send('computed',{result:{columns:columns, rows:outRows, hasSuper:hasSuperDims, superCount:superKeys.filter(k=>k!=='__grand__').length, colCount:colKeys.length, rowCount:rowKeys.length, rowBlockCount:(typeof grouped!=='undefined'?grouped.length:0), passed:passed, used:used, totalRows:STATE.rowCount, warnings:warnings, elapsedMs:Date.now()-t0, lowBase:Number(spec.lowBase||0), flatLayout:true, hasGrandBase:hasSuperDims}});
+}
+function computeBrand(spec){
+  const t0=Date.now(); spec=spec||{};
+  const groupKeys = spec.brandGroups || [];
+  const groups = groupKeys.map(k=>STATE.groupMap.get(k)).filter(Boolean);
+  const selectedSet = parseSelectedSet(spec.selectedValues || '');
+  const dec = Math.max(0, Math.min(4, Number(spec.decimals || 1)));
+  const attrMap = new Map();
+  for(const g of groups){
+    for(let j=0;j<g.indices.length;j++){
+      const idx=g.indices[j], suffix=g.suffixes[j] || String(j+1), col=STATE.columns[idx];
+      const label = firstNonZeroLabel(col) || g.childLabels[j] || suffix;
+      if(!attrMap.has(suffix)) attrMap.set(suffix,{key:suffix,label:label});
+    }
+  }
+  const attrs = Array.from(attrMap.values()).sort((a,b)=>naturalCompare(a.key,b.key));
+  let topEnt = spec.brandTopEntity || null;
+  const topPathsForRow = (r)=>{
+    if(!topEnt) return [{key:'__total__', label:'Total'}];
+    const vals = getEntityValues(r, topEnt, spec, false);
+    const out=[{key:'__total__', label:'Total'}];
+    for(const v of vals) out.push({key:topEnt.key+'='+v.key, label:v.label});
+    return out;
+  };
+  const topMap = new Map(); topMap.set('__total__',{key:'__total__', label:'Total'});
+  const stat = new Map();
+  function statKey(topKey, attrKey, groupKey){ return topKey+RS+attrKey+RS+groupKey; }
+  function ensure(topKey, attrKey, groupKey){
+    const k=statKey(topKey, attrKey, groupKey);
+    if(!stat.has(k)) stat.set(k,{numW:0,denW:0,sumW:0,validW:0,validNonZeroW:0});
+    return stat.get(k);
+  }
+  const baseByTop = new Map();
+  function addBase(topKey,w){ const b=baseByTop.get(topKey)||{w:0,u:0}; b.w+=w; b.u+=1; baseByTop.set(topKey,b); }
+  for(let r=0;r<STATE.rowCount;r++){
+    if(spec.useFilters && !passFilters(r,spec)) continue;
+    const w=getWeight(r,spec);
+    const topPaths=topPathsForRow(r);
+    for(const tp of topPaths){ topMap.set(tp.key,tp); addBase(tp.key,w); }
+    for(const tp of topPaths){
+      for(const g of groups){
+        for(let j=0;j<g.indices.length;j++){
+          const idx=g.indices[j], suffix=g.suffixes[j] || String(j+1), raw=STATE.columns[idx].raw(r);
+          const s=ensure(tp.key, suffix, g.key);
+          s.denW += w;
+          if(!isMissingRaw(raw)){
+            const n=Number(String(raw).replace(/,/g,''));
+            if(Number.isFinite(n)){ s.sumW += n*w; s.validW += w; }
+          }
+          if(!isZeroish(raw)){ s.validNonZeroW += w; if(selectedSet.size ? selectedSet.has(clean(raw).toLowerCase()) : true) s.numW += w; }
+        }
+      }
+    }
+  }
+  let topKeys=Array.from(topMap.keys());
+  const totalFirst=topKeys.includes('__total__');
+  topKeys=topKeys.filter(k=>k!=='__total__');
+  topKeys=sortedKeysByInfo(topKeys, k=>(topMap.get(k)||{}).label||k, spec.brandTopSort || 'file');
+  if(totalFirst) topKeys=['__total__'].concat(topKeys);
+  const columns=[];
+  for(const tk of topKeys){
+    const top=topMap.get(tk)||{label:'Total'};
+    for(const g of groups){ columns.push({topKey:tk, topLabel:top.label||'Total', key:g.key, label:g.brandLabel || g.label || g.id}); }
+  }
+  const metric = spec.metric || 'selectedPct';
+  const rows=[];
+  for(const a of attrs){
+    const rawVals = columns.map(c=>{
+      const s=stat.get(statKey(c.topKey,a.key,c.key)) || {numW:0,denW:0,sumW:0,validW:0,validNonZeroW:0};
+      if(metric === 'mean') return s.validW ? s.sumW/s.validW : NaN;
+      if(metric === 'validPct') return s.denW ? s.validNonZeroW/s.denW*100 : NaN;
+      return s.denW ? s.numW/s.denW*100 : NaN;
+    });
+    let vals = rawVals;
+    if(metric === 'index'){
+      const valid=rawVals.filter(Number.isFinite); const avg=valid.length ? valid.reduce((x,y)=>x+y,0)/valid.length : NaN;
+      vals = rawVals.map(v=>Number.isFinite(v)&&avg ? v/avg*100 : NaN);
+    }
+    rows.push({attribute:a.label, values:vals.map(v=>({text:fmtNumber(v,dec, metric !== 'mean' && metric !== 'index'), raw:v}))});
+  }
+  send('brandComputed',{result:{columns:columns, rows:rows, baseByTop:Array.from(baseByTop.entries()), metric:metric, hasTop:!!topEnt, elapsedMs:Date.now()-t0}});
+}
+self.onmessage = function(e){
+  const msg=e.data || {};
+  if(msg.type === 'load') parseFile(msg.file, msg.options || {});
+  else if(msg.type === 'categories'){
+    try{ send('categories',{requestId:msg.requestId, entity:msg.entity, categories:categoriesFor(msg.entity, msg.spec || {})}); }
+    catch(err){ send('error',{message:String(err.message||err)}); }
+  } else if(msg.type === 'compute') compute(msg.spec || {});
+  else if(msg.type === 'brandCompute') computeBrand(msg.spec || {});
+};
+</script>
+<script id="embeddedCsvGzB64" type="text/plain" data-file="Sample Data.csv">
+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
+</script>
+<script>
+'use strict';
+const $ = (id)=>document.getElementById(id);
+let worker=null, meta=null, allEntities=[], currentResult=null, currentBrand=null, listMode='all';
+let customGroups=[];
+const pendingFilterSelections=new Map();
+const MAIN_RS = String.fromCharCode(30);
+const zones={rows:[], superside:[], cols:[], super:[], filters:[]};
+const filterState=new Map();
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function setStatus(text,pct){ $('statusText').textContent=text; if(pct != null) $('progressFill').style.width=Math.max(0,Math.min(100,pct))+'%'; }
+function makeWorker(){
+  if(worker) worker.terminate();
+  const blob = new Blob([$('workerScript').textContent], {type:'text/javascript'});
+  worker = new Worker(URL.createObjectURL(blob));
+  worker.onmessage = onWorkerMessage;
+  worker.onerror = (e)=>setStatus('Worker error: '+e.message,0);
+}
+function onWorkerMessage(e){
+  const m=e.data || {};
+  if(m.type==='progress'){
+    setStatus((m.message||'Loading')+'... '+(m.pct||0)+'% ('+(m.rows||0).toLocaleString()+' rows)', m.pct||0);
+    $('dataInfo').textContent=(m.rows||0).toLocaleString()+' rows';
+  } else if(m.type==='loaded'){
+    meta=m.meta; allEntities=[...meta.groups, ...meta.variables];
+    setStatus('Loaded '+meta.fileName+' in '+(m.elapsedMs/1000).toFixed(1)+'s. Header: '+meta.headerUsed,100);
+    $('dataInfo').textContent=meta.rowCount.toLocaleString()+' rows x '+meta.colCount.toLocaleString()+' cols';
+    $('speedInfo').textContent='Column store ready';
+    $('runBtn').disabled=false; $('quickWaveBtn').disabled=false; $('quickWaveTopBtn').disabled=false; $('saveSetupBtn').disabled=false; $('exportDictBtn').disabled=false; $('autoBiBtn').disabled=false; $('clearBiBtn').disabled=false; $('runBrandBtn').disabled=false;
+    populateWeight(); renderVarList(); renderDictionary(); renderBrandGroupList();
+  } else if(m.type==='categories'){
+    renderFilterCategories(m.entity, m.categories || []);
+  } else if(m.type==='computed'){
+    currentResult=m.result; renderResult(currentResult); $('exportCsvBtn').disabled=false; $('copyBtn').disabled=false; $('printBtn').disabled=false;
+    $('speedInfo').textContent='Table '+(m.result.elapsedMs/1000).toFixed(2)+'s';
+  } else if(m.type==='brandComputed'){
+    currentBrand=m.result; renderBrandResult(currentBrand); $('exportBrandBtn').disabled=false;
+    $('speedInfo').textContent='Brand '+(m.result.elapsedMs/1000).toFixed(2)+'s';
+  } else if(m.type==='error'){
+    setStatus('Error: '+m.message,0); console.error(m.stack||m.message);
+  }
+}
+let embeddedCsvFile = null;
+async function getEmbeddedCsvFile(){
+  if(embeddedCsvFile) return embeddedCsvFile;
+  const node = $('embeddedCsvGzB64');
+  if(!node) throw new Error('Embedded CSV payload was not found in this HTML file.');
+  if(typeof DecompressionStream === 'undefined') throw new Error('This browser cannot decompress the embedded CSV. Please open the dashboard in current Chrome or Edge.');
+  setStatus('Preparing embedded CSV...',1);
+  const b64 = node.textContent.replace(/\s+/g,'');
+  const bin = atob(b64);
+  const chunk = 1024 * 1024;
+  const parts = [];
+  for(let i=0;i<bin.length;i+=chunk){
+    const slice = bin.slice(i, i+chunk);
+    const arr = new Uint8Array(slice.length);
+    for(let j=0;j<slice.length;j++) arr[j] = slice.charCodeAt(j);
+    parts.push(arr);
+    if(i % (4*chunk) === 0) await new Promise(r=>setTimeout(r,0));
+  }
+  const gzBlob = new Blob(parts, {type:'application/gzip'});
+  const csvBlob = await new Response(gzBlob.stream().pipeThrough(new DecompressionStream('gzip'))).blob();
+  embeddedCsvFile = new File([csvBlob], node.dataset.file || 'Sample Data.csv', {type:'text/csv'});
+  return embeddedCsvFile;
+}
+async function loadEmbeddedData(){
+  try{ const f = await getEmbeddedCsvFile(); loadData(f); }
+  catch(e){ alert(e.message || String(e)); setStatus('Embedded CSV load failed: '+(e.message || e),0); }
+}
+function loadData(fileOverride){
+  const f=fileOverride; if(!f){ alert('Embedded CSV is not ready.'); return; }
+  makeWorker(); meta=null; allEntities=[]; currentResult=null; currentBrand=null;
+  Object.keys(zones).forEach(k=>zones[k]=[]); filterState.clear(); renderZones(); $('filterPanel').innerHTML='';
+  $('runBtn').disabled=true; $('quickWaveBtn').disabled=true; $('quickWaveTopBtn').disabled=true; $('saveSetupBtn').disabled=true; $('exportCsvBtn').disabled=true; $('copyBtn').disabled=true; $('printBtn').disabled=true; $('exportDictBtn').disabled=true; $('runBrandBtn').disabled=true; $('autoBiBtn').disabled=true; $('clearBiBtn').disabled=true; $('exportBrandBtn').disabled=true;
+  $('tableOut').className='empty'; $('tableOut').textContent='Loading data...'; $('dictOut').className='empty'; $('dictOut').textContent='Loading dictionary...';
+  setStatus('Starting worker load...',1); $('progressFill').style.width='1%';
+  worker.postMessage({type:'load', file:f, options:{headerMode:$('headerMode').value, chunkSize:4*1024*1024}});
+}
+function entityTitle(e){ return e.kind==='group' ? e.label : (e.id + (e.label && e.label!==e.id ? ' - '+e.label : '')); }
+function renderVarList(){
+  const q=$('varSearch').value.trim().toLowerCase();
+  const box=$('varList'); if(!meta){ box.innerHTML='<div class="empty">Embedded data is loading...</div>'; return; }
+  let arr=allEntities.filter(e=>{
+    if(listMode==='vars' && e.kind!=='var') return false;
+    if(listMode==='groups' && e.kind!=='group') return false;
+    if(listMode==='bi' && !e.isBI) return false;
+    if(!q) return true;
+    return (e.id+' '+e.label+' '+(e.brandLabel||'')).toLowerCase().includes(q);
+  });
+  const total=arr.length; arr=arr.slice(0,500);
+  box.innerHTML=arr.map(e=>{
+    const badge=e.kind==='group' ? '<span class="badge group">MR/Grid '+(e.count||'')+'</span>' : '<span class="badge">Single</span>';
+    const bi=e.isBI?'<span class="badge bi">Brand imagery</span>':'';
+    const unique=e.kind==='var'?'<span>'+Number(e.unique||0).toLocaleString()+' values</span>':'<span>mode: '+esc(e.mode||'auto')+'</span>';
+    return '<div class="var-item" draggable="true" data-entity="'+esc(JSON.stringify(e))+'"><div class="var-title">'+esc(entityTitle(e))+'</div><div class="var-meta">'+badge+bi+unique+'</div></div>';
+  }).join('') + (total>arr.length?'<div class="note">Showing first '+arr.length+' of '+total+'. Use search to narrow.</div>':'');
+  box.querySelectorAll('.var-item').forEach(el=>{
+    el.addEventListener('dragstart',ev=>ev.dataTransfer.setData('text/plain', el.dataset.entity));
+    el.addEventListener('dblclick',()=>addToZone('rows', JSON.parse(el.dataset.entity)));
+  });
+}
+function renderZones(){
+  for(const z of ['rows','superside','cols','super','filters']){
+    const box=$('zone-'+z); box.innerHTML=zones[z].map((e,i)=>'<span class="chip">'+esc(e.kind==='group'?'MR: ':'')+esc(e.id)+' <button class="x" data-zone="'+z+'" data-i="'+i+'">x</button></span>').join('');
+  }
+  document.querySelectorAll('.chip .x').forEach(b=>b.onclick=()=>removeFromZone(b.dataset.zone, Number(b.dataset.i)));
+}
+function addToZone(zone,e){
+  if(!meta) return;
+  if(zones[zone].some(x=>x.key===e.key)) return;
+  zones[zone].push(e); renderZones();
+  if(zone==='filters') requestFilterCategories(e);
+}
+function removeFromZone(zone,i){
+  const e=zones[zone][i]; zones[zone].splice(i,1); renderZones();
+  if(zone==='filters' && e){ filterState.delete(e.key); const card=document.querySelector('[data-filter-card="'+CSS.escape(e.key)+'"]'); if(card) card.remove(); }
+}
+function setupDrops(){
+  document.querySelectorAll('.dropzone').forEach(z=>{
+    z.addEventListener('dragover',ev=>{ev.preventDefault(); z.classList.add('dragover');});
+    z.addEventListener('dragleave',()=>z.classList.remove('dragover'));
+    z.addEventListener('drop',ev=>{ev.preventDefault(); z.classList.remove('dragover'); const txt=ev.dataTransfer.getData('text/plain'); if(txt) addToZone(z.dataset.zone, JSON.parse(txt));});
+  });
+}
+function populateWeight(){
+  const s=$('weightSelect'); s.innerHTML='<option value="">None</option>' + meta.variables.map(v=>'<option value="'+v.index+'">'+esc(v.id+' - '+v.label)+'</option>').join('');
+  const candidate=meta.variables.find(v=>/weight|wgt|wt/i.test(v.id+' '+v.label)); if(candidate) s.value=String(candidate.index);
+  const bt=$('brandTopVar'); if(bt) bt.innerHTML='<option value="">None / Total only</option>' + meta.variables.map(v=>'<option value="var:'+v.index+'">'+esc(v.id+' - '+v.label)+'</option>').join('') + meta.groups.map(g=>'<option value="'+esc(g.key)+'">MR: '+esc(g.id+' - '+g.label)+'</option>').join('');
+}
+function requestFilterCategories(e){
+  const card=document.createElement('div'); card.className='filter-card'; card.dataset.filterCard=e.key; card.innerHTML='<h4>'+esc(entityTitle(e))+'</h4><div class="small">Loading categories...</div>'; $('filterPanel').appendChild(card);
+  worker.postMessage({type:'categories', requestId:e.key, entity:e, spec:buildSpec(false)});
+}
+function renderFilterCategories(entity,cats){
+  const pending = pendingFilterSelections.get(entity.key);
+  const defaultSelected = pending ? new Set(cats.filter(c=>pending.has(c.key)).map(c=>c.key)) : new Set(cats.map(c=>c.key));
+  pendingFilterSelections.delete(entity.key);
+  filterState.set(entity.key,{entity:entity, categories:cats, selected:defaultSelected, search:''});
+  const card=document.querySelector('[data-filter-card="'+CSS.escape(entity.key)+'"]'); if(!card) return;
+  const render=()=>{
+    const st=filterState.get(entity.key); const q=(st.search||'').toLowerCase(); const shown=st.categories.filter(c=>(c.label||'').toLowerCase().includes(q)).slice(0,400);
+    card.innerHTML='<h4>'+esc(entityTitle(entity))+'</h4><input type="text" placeholder="Search categories" value="'+esc(st.search||'')+'" />'
+      +'<div class="filter-actions"><button data-act="all">All</button><button data-act="none">None</button><span class="small">'+st.selected.size+' / '+st.categories.length+' selected</span></div>'
+      +'<div class="catbox">'+shown.map(c=>'<label><input type="checkbox" data-key="'+esc(c.key)+'" '+(st.selected.has(c.key)?'checked':'')+' /> <span>'+esc(c.label)+'</span></label>').join('')+'</div>'
+      +(st.categories.length>shown.length?'<div class="small">Showing '+shown.length+' categories. Use search to narrow.</div>':'');
+    card.querySelector('input[type=text]').oninput=(ev)=>{st.search=ev.target.value; render();};
+    card.querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(b.dataset.act==='all') st.selected=new Set(st.categories.map(c=>c.key)); else st.selected.clear(); render(); });
+    card.querySelectorAll('.catbox input').forEach(cb=>cb.onchange=()=>{ const key=cb.dataset.key; if(cb.checked) st.selected.add(key); else st.selected.delete(key); card.querySelector('.small').textContent=st.selected.size+' / '+st.categories.length+' selected'; });
+  };
+  render();
+}
+function buildSpec(includeFilters=true){
+  const filters=[];
+  if(includeFilters){
+    for(const st of filterState.values()){
+      if(st.selected.size === st.categories.length) continue;
+      filters.push({entity:st.entity, values:Array.from(st.selected)});
+    }
+  }
+  return {rows:zones.rows, superSide:zones.superside, cols:zones.cols, super:zones.super, filters:filters, weightIndex:$('weightSelect').value===''?null:Number($('weightSelect').value), mrMode:'auto', selectedValues:'1, Yes, Y, True, Selected', mrBase:'cases', includeMissing:$('includeMissing').checked, rowSort:$('rowSort').value, colSort:$('colSort').value, superSort:$('superSort').value, decimals:Number($('decimals').value||1), lowBase:Number($('lowBase').value||0), stats:{uw:$('statUw').checked,w:$('statW').checked,rowPct:$('statRow').checked,colPct:$('statCol').checked,totalPct:$('statTotal').checked,baseUw:$('statBaseUw').checked,baseW:false,respBase:false}, sig:{enabled:$('sigEnable').checked, z:Number($('sigThreshold').value||1.96), mode:$('sigMode').value}};
+}
+function runCrosstab(){
+  if(!meta) return; if(!zones.rows.length && !zones.superside.length && !zones.cols.length && !zones.super.length){ alert('Add at least one variable to Rows, SuperSide, Top, or SuperTop.'); return; }
+  const anyStat = ['statUw','statW','statRow','statCol','statTotal','statBaseUw'].some(id=>$(id).checked);
+  if(!anyStat){ alert('Select at least one statistic or base option before running the table.'); return; }
+  setStatus('Calculating crosstab in worker...',100); $('speedInfo').textContent='Calculating'; $('tableOut').className='empty'; $('tableOut').textContent='Calculating...';
+  worker.postMessage({type:'compute', spec:buildSpec(true)});
+}
+
+function addCustomGroup(){
+  const name=$('groupName').value.trim();
+  const items=$('groupItems').value.split(/[;,]/).map(x=>x.trim()).filter(Boolean);
+  const axis=$('groupAxis') ? $('groupAxis').value : 'side';
+  const mode=$('groupMode') ? $('groupMode').value : 'keepmerge';
+  if(!name || !items.length){ alert('Enter a group name and responses, e.g. Name Jazz/Warid and Responses Jazz, Warid.'); return; }
+  customGroups.push({name:name, items:items, axis:axis, mode:mode});
+  $('groupName').value=''; $('groupItems').value=''; renderGroupList();
+  if(currentResult) { try{ renderResult(currentResult); } catch(e){ console.error(e); alert('Could not apply merged option: '+e.message); } }
+}
+function renderGroupList(){
+  const box=$('groupList');
+  if(!customGroups.length){ box.innerHTML='<span class="small">No custom groups.</span>'; return; }
+  const axisLabel={side:'Side',top:'Top',supertop:'SuperTop',superside:'SuperSide'};
+  const modeLabel={keepmerge:'keep + merged option', mergeonly:'merge only'};
+  box.innerHTML=customGroups.map((g,i)=>'<div class="group-item"><span><b>'+esc(g.name)+'</b> ['+esc(axisLabel[g.axis]||g.axis)+' / '+esc(modeLabel[g.mode]||g.mode)+']: '+esc(g.items.join(', '))+'</span><button type="button" data-i="'+i+'">x</button></div>').join('');
+  box.querySelectorAll('button').forEach(b=>b.onclick=()=>{customGroups.splice(Number(b.dataset.i),1); renderGroupList(); if(currentResult) renderResult(currentResult);});
+}
+function normText(x){ return String(x||'').trim().toLowerCase(); }
+function textMatchesAny(txt, items){ const t=normText(txt); const parts=t.split(/[\/|,;]+/).map(x=>x.trim()).filter(Boolean); return (items||[]).some(x=>{ const q=normText(x); return t===q || parts.includes(q) || t.includes(q); }); }
+function pctNumeratorFromValue(v){ const raw=Number((v||{}).raw), base=Number((v||{}).base||0); if(!Number.isFinite(raw)) return 0; if((v||{}).pct) return base ? raw/100*base : 0; return raw; }
+function mergeValues(rows, cols){
+  const vals=[];
+  for(let c=0;c<cols.length;c++){
+    let numerator=0, base=0, pct=false, has=false;
+    for(const r of rows){ const v=(r.values||[])[c]||{}; const raw=Number(v.raw); if(Number.isFinite(raw)){ has=true; numerator += pctNumeratorFromValue(v); } if(v.pct) pct=true; if(v.base) base=Math.max(base, Number(v.base)||0); }
+    if(pct){ const p=base ? numerator/base*100 : NaN; vals.push({text:Number.isFinite(p)?fmtDisplay(p,true):'', raw:p, pct:true, base:base}); }
+    else vals.push({text:has?fmtDisplay(numerator,false):'', raw:numerator, pct:false, base:base});
+  }
+  return vals;
+}
+function groupedRowsForBlock(block, cols, axis, superSideLabel){
+  const groups=customGroups.filter(g=>(g.axis||'side')===(axis||'side'));
+  const out=[];
+  for(const g of groups){
+    let match=(block||[]).filter(r=>!r.isQuestionTotal && !r.isBase && !r.isSection && !r.isQuestionBase);
+    if(axis==='side') match=match.filter(r=>textMatchesAny(r.rowText,g.items) && (!superSideLabel || (r.superSideLabel||'')===superSideLabel));
+    else if(axis==='superside') match=match.filter(r=>textMatchesAny(r.superSideLabel||'',g.items));
+    if(!match.length) continue;
+    const stats=[...new Set(match.map(r=>r.stat||''))];
+    for(const st of stats){ const rows=match.filter(r=>(r.stat||'')===st); if(axis==='superside'){ const rowNames=[...new Set(rows.map(r=>r.rowText||''))]; for(const rn of rowNames){ const rr=rows.filter(r=>(r.rowText||'')===rn); out.push({rowText:rn, rowGroup:rr[0].rowGroup||'', superSideLabel:g.name, stat:st, values:mergeValues(rr,cols), isCustomGroup:true}); } } else out.push({rowText:g.name, rowGroup:rows[0].rowGroup||'', superSideLabel:rows[0].superSideLabel||'', stat:st, values:mergeValues(rows,cols), isCustomGroup:true}); }
+  }
+  return out;
+}
+function shouldHideRowByMergeOnly(r, axis){ return customGroups.some(g=>(g.axis||'side')===axis && g.mode==='mergeonly' && (axis==='side' ? textMatchesAny(r.rowText,g.items) : textMatchesAny(r.superSideLabel||'',g.items))); }
+function fmtDisplay(n,pct){ const dec=Math.max(0,Math.min(4,Number($('decimals').value||1))); if(!Number.isFinite(n)) return ''; return pct?n.toFixed(dec)+'%':(Math.abs(n-Math.round(n))<.000001?String(Math.round(n)):n.toFixed(dec)); }
+function sigMarker(row, colIndex, cols){
+  if(!$('sigEnable').checked) return '';
+  if(!row || !row.stat || row.stat.indexOf('%')<0) return '';
+  const v=(row.values||[])[colIndex]||{}; if(!Number.isFinite(Number(v.raw))) return '';
+  const n1=Number(v.base||0); if(n1<Math.max(1,Number($('lowBase').value||0))) return '';
+  let refIndex=-1;
+  if($('sigMode').value==='previous') refIndex=colIndex-1;
+  else {
+    const c=cols[colIndex];
+    refIndex=cols.findIndex((x,i)=>i!==colIndex && x.superKey===c.superKey && x.isTotal);
+  }
+  if(refIndex<0) return '';
+  const rv=(row.values||[])[refIndex]||{}; const n2=Number(rv.base||0);
+  if(n2<Math.max(1,Number($('lowBase').value||0)) || !Number.isFinite(Number(rv.raw))) return '';
+  const p1=Number(v.raw)/100, p2=Number(rv.raw)/100;
+  const pp=((p1*n1)+(p2*n2))/(n1+n2); const se=Math.sqrt(Math.max(0.0000001, pp*(1-pp)*(1/n1+1/n2)));
+  const z=(p1-p2)/se; const cut=Number($('sigThreshold').value||1.96);
+  if(z>=cut) return '<span class="sigmark sigup">▲</span>';
+  if(z<=-cut) return '<span class="sigmark sigdown">▼</span>';
+  return '';
+}
+function renderRowHtml(r, cols, low){
+  const cls=((r.isBase||r.isQuestionBase)?'mutedrow baserow':(r.isQuestionTotal?'totalrow':(r.isCustomGroup?'totalrow':'')));
+  let html='<tr class="'+cls+'"><td class="rowhead">'+esc(r.rowText)+'</td><td class="stathead">'+esc(r.stat||'')+'</td>';
+  for(let ci=0;ci<(r.values||[]).length;ci++){ const v=r.values[ci]||{}; const lowClass=(v.base && low && v.base<low && !r.isBase)?' lowbase':''; html+='<td class="'+lowClass+'">'+esc(v.text)+sigMarker(r,ci,cols)+'</td>'; }
+  return html+'</tr>';
+}
+function textCompareForUi(a,b,mode){
+  a=String(a||''); b=String(b||''); mode=mode||'file';
+  if(mode==='az') return a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'});
+  if(mode==='za') return b.localeCompare(a, undefined, {numeric:true, sensitivity:'base'});
+  return 0;
+}
+function firstTotalValueIndex(cols){
+  cols = cols || [];
+  let idx = cols.findIndex(c => c && (c.isGrand || c.isTotal || c.colKey === '__total__'));
+  if(idx < 0) idx = 0;
+  return idx;
+}
+function numericSortValueForRows(rows, totalIndex){
+  let best = null;
+  for(const r of (rows || [])){
+    if(!r || r.isQuestionTotal || r.isBase || r.isSection) continue;
+    const v = (r.values || [])[totalIndex] || {};
+    let n = Number(v.raw);
+    if(!Number.isFinite(n)){
+      const txt = String(v.text || '').replace(/%/g,'').replace(/,/g,'').trim();
+      n = Number(txt);
+    }
+    if(Number.isFinite(n)){
+      if(best === null || n > best) best = n;
+    }
+  }
+  return best === null ? -Infinity : best;
+}
+
+function cloneVal(v){ return Object.assign({}, v||{}); }
+function sumColumnVals(vals, statLabel){
+  const isPct=(vals||[]).some(v=>v&&v.pct) || String(statLabel||'').indexOf('%')>=0;
+  let numerator=0, denominator=0, rawSum=0, has=false;
+  for(const v of (vals||[])){ const raw=Number((v||{}).raw), base=Number((v||{}).base||0); if(Number.isFinite(raw)){has=true; rawSum+=raw;} if(isPct){ if(Number.isFinite(raw)) numerator += ((v||{}).pct || String(statLabel||'').indexOf('%')>=0) ? (base ? raw/100*base : 0) : raw; denominator += base; } }
+  if(isPct){ const pct=denominator ? numerator/denominator*100 : NaN; return {text:Number.isFinite(pct)?fmtDisplay(pct,true):'', raw:pct, pct:true, base:denominator}; }
+  return {text:has?fmtDisplay(rawSum,false):'', raw:rawSum, pct:false, base:denominator};
+}
+function applyColumnGroups(res){
+  const groups=customGroups.filter(g=>g.axis==='top'||g.axis==='supertop');
+  if(!res||!groups.length) return res;
+  let out=Object.assign({},res,{columns:(res.columns||[]).slice(), rows:(res.rows||[]).map(r=>Object.assign({},r,{values:(r.values||[]).map(cloneVal)}))});
+  for(const g of groups){
+    const cols=out.columns;
+    const matched=cols.map((c,i)=>({c:c,i:i})).filter(x=> g.axis==='top' ? (!x.c.isGrand && !x.c.isTotal && textMatchesAny(x.c.categoryLabel||'', g.items)) : (!x.c.isGrand && textMatchesAny((x.c.superLabels||[]).join(' / '), g.items)) );
+    if(!matched.length) continue;
+    const newCols=[], sourceLists=[];
+    if(g.axis==='top'){
+      const buckets=new Map(); for(const m of matched){ const k=(m.c.superKey||'')+MAIN_RS+(m.c.bannerKey||''); if(!buckets.has(k)) buckets.set(k,[]); buckets.get(k).push(m); }
+      for(const arr of buckets.values()){ const first=arr[0].c; newCols.push(Object.assign({}, first, {colKey:'GRP:'+g.name+':'+(first.bannerKey||''), categoryLabel:g.name, colLabels:[g.name], isTotal:false})); sourceLists.push(arr.map(x=>x.i)); }
+    } else {
+      const buckets=new Map(); for(const m of matched){ const k=m.c.colKey||m.c.categoryLabel||''; if(!buckets.has(k)) buckets.set(k,[]); buckets.get(k).push(m); }
+      for(const arr of buckets.values()){ const first=arr[0].c; newCols.push(Object.assign({}, first, {superKey:'SGRP:'+g.name, superLabels:[g.name]})); sourceLists.push(arr.map(x=>x.i)); } out.hasSuper=true;
+    }
+    const hide=new Set(g.mode==='mergeonly'?matched.map(x=>x.i):[]);
+    const keepIdx=cols.map((_,i)=>i).filter(i=>!hide.has(i));
+    out.columns=keepIdx.map(i=>cols[i]).concat(newCols);
+    out.rows=out.rows.map(r=>{ const vals=keepIdx.map(i=>(r.values||[])[i]||{text:''}); for(const list of sourceLists) vals.push(sumColumnVals(list.map(i=>(r.values||[])[i]), r.stat)); return Object.assign({},r,{values:vals}); });
+  }
+  return out;
+}
+function applyCustomGroups(res){ return applyColumnGroups(res); }
+
+function cloneSortedResult(res){
+  // This visible sort is applied in the browser as a safety layer, so Side, Top, and SuperTop
+  // category order changes even when an older worker result is on screen. It sorts category labels only, not table numbers.
+  if(!res) return res;
+  const rowMode=$('rowSort') ? $('rowSort').value : 'file';
+  const colMode=$('colSort') ? $('colSort').value : 'file';
+  const superMode=$('superSort') ? $('superSort').value : 'file';
+  const oldCols=res.columns || [];
+  let indices=oldCols.map((_,i)=>i);
+  if(colMode!=='file' || superMode!=='file'){
+    const groupBy=(arr,fn)=>{ const out=[]; const pos=new Map(); for(const x of arr){ const k=fn(x); if(!pos.has(k)){pos.set(k,out.length); out.push({key:k, items:[]});} out[pos.get(k)].items.push(x);} return out; };
+    let superGroups=groupBy(indices, i=>oldCols[i].superKey || '__total__');
+    // Keep the grand Base/Total super group first, then sort actual SuperTop category groups.
+    const grand=superGroups.filter(g=>g.key==='__grand__');
+    let real=superGroups.filter(g=>g.key!=='__grand__');
+    if(superMode!=='file') real.sort((ga,gb)=>textCompareForUi((oldCols[ga.items[0]].superLabels||[]).join(' / '),(oldCols[gb.items[0]].superLabels||[]).join(' / '),superMode));
+    superGroups=grand.concat(real);
+    const final=[];
+    for(const sg of superGroups){
+      let bannerGroups=groupBy(sg.items, i=>oldCols[i].bannerKey || oldCols[i].colKey || '__total__');
+      const total=bannerGroups.filter(g=>g.key==='__total__' || (oldCols[g.items[0]]||{}).isTotal || (oldCols[g.items[0]]||{}).isGrand);
+      let banners=bannerGroups.filter(g=>!(g.key==='__total__' || (oldCols[g.items[0]]||{}).isTotal || (oldCols[g.items[0]]||{}).isGrand));
+      // Preserve Top variable/banner order. Sort only the categories inside each Top banner.
+      for(const bg of banners){
+        if(colMode!=='file') bg.items.sort((ia,ib)=>textCompareForUi(oldCols[ia].categoryLabel || oldCols[ia].colKey, oldCols[ib].categoryLabel || oldCols[ib].colKey, colMode));
+      }
+      for(const bg of total.concat(banners)) final.push(...bg.items);
+    }
+    indices=final;
+  }
+  const out=Object.assign({},res);
+  out.columns=indices.map(i=>oldCols[i]);
+  out.rows=(res.rows||[]).map(r=>{
+    const nr=Object.assign({},r);
+    if(r.values) nr.values=indices.map(i=>r.values[i] || {text:''});
+    return nr;
+  });
+  if(rowMode!=='file'){
+    const rows=[]; let base=[]; let blocks=[]; let cur=null;
+    for(const r of out.rows){
+      if(r.isBase){base.push(r); continue;}
+      if(r.isSection){cur={section:r, rows:[]}; blocks.push(cur); continue;}
+      if(!cur){cur={section:null, rows:[]}; blocks.push(cur);}
+      cur.rows.push(r);
+    }
+    rows.push(...base);
+    for(const b of blocks){
+      if(b.section) rows.push(b.section);
+      const qBases=b.rows.filter(r=>r.isQuestionBase);
+      const totals=b.rows.filter(r=>r.isQuestionTotal);
+      const normal=b.rows.filter(r=>!r.isQuestionTotal && !r.isQuestionBase);
+      const catGroups=[]; const idx=new Map();
+      for(const r of normal){ const key=String(r.rowText||''); if(!idx.has(key)){idx.set(key,catGroups.length); catGroups.push({key:key, rows:[]});} catGroups[idx.get(key)].rows.push(r); }
+      if(rowMode==='value_desc' || rowMode==='value_asc'){
+        const totalIdx = firstTotalValueIndex(out.columns || []);
+        catGroups.sort((a,b)=>{
+          const av = numericSortValueForRows(a.rows,totalIdx);
+          const bv = numericSortValueForRows(b.rows,totalIdx);
+          if(av===bv) return textCompareForUi(a.key,b.key,'az');
+          return rowMode==='value_desc' ? (bv-av) : (av-bv);
+        });
+      } else {
+        catGroups.sort((a,b)=>textCompareForUi(a.key,b.key,rowMode));
+      }
+      rows.push(...qBases);
+      for(const g of catGroups) rows.push(...g.rows);
+      rows.push(...totals);
+    }
+    out.rows=rows;
+  }
+  return applyCustomGroups(out);
+}
+function renderResult(res){
+  res = cloneSortedResult(res);
+  const out=$('tableOut'); out.className='table-wrap';
+  const cols=res.columns || [];
+  const hasSuper=!!res.hasSuper;
+  const rowSpan=hasSuper?3:2;
+  let html='<table class="report"><thead>';
+  html+='<tr><th class="rowhead" rowspan="'+rowSpan+'">Side / Rows</th><th class="stathead" rowspan="'+rowSpan+'">Statistic</th>';
+  if(hasSuper){
+    let i=0;
+    while(i<cols.length){
+      const sk=cols[i].superKey; let j=i;
+      while(j<cols.length && cols[j].superKey===sk) j++;
+      html+='<th colspan="'+(j-i)+'">'+esc((cols[i].superLabels||['Total']).join(' / '))+'</th>';
+      i=j;
+    }
+    html+='</tr><tr>';
+  }
+  let i=0;
+  while(i<cols.length){
+    const sk=cols[i].superKey, bk=cols[i].bannerKey || cols[i].colKey; let j=i;
+    while(j<cols.length && cols[j].superKey===sk && (cols[j].bannerKey || cols[j].colKey)===bk) j++;
+    html+='<th colspan="'+(j-i)+'">'+esc(cols[i].bannerLabel || 'Total')+'</th>';
+    i=j;
+  }
+  html+='</tr><tr>'+cols.map(c=>'<th>'+esc(c.categoryLabel || (c.colLabels||['Total']).join(' / '))+'</th>').join('')+'</tr></thead><tbody>';
+  const low=res.lowBase||0;
+  const baseRows=[], blocks=[]; let cur=null;
+  for(const r of res.rows){
+    if(r.isBase){ baseRows.push(r); continue; }
+    if(r.isSection){ cur={section:r, rows:[]}; blocks.push(cur); continue; }
+    if(!cur){ cur={section:null, rows:[]}; blocks.push(cur); }
+    cur.rows.push(r);
+  }
+  for(const r of baseRows) html += renderRowHtml(r, cols, low);
+  for(const b of blocks){
+    if(b.section) html+='<tr class="sectionrow"><td class="sectioncell" colspan="'+(2+cols.length)+'">'+esc(b.section.rowText)+'</td></tr>';
+    const qBases=b.rows.filter(r=>r.isQuestionBase), totals=b.rows.filter(r=>r.isQuestionTotal), normal=b.rows.filter(r=>!r.isQuestionTotal && !r.isQuestionBase);
+    for(const r of qBases) html += renderRowHtml(r, cols, low);
+    const hasSS = normal.some(r=>r.superSideLabel);
+    if(hasSS){
+      const labels=[]; normal.forEach(r=>{ const l=r.superSideLabel||''; if(!shouldHideRowByMergeOnly(r,'superside') && !labels.includes(l)) labels.push(l); });
+      labels.forEach(l=>{ if(l) html+='<tr class="sectionrow"><td class="sectioncell" colspan="'+(2+cols.length)+'">'+esc(l)+'</td></tr>'; const sub=normal.filter(r=>(r.superSideLabel||'')===l); for(const r of sub.filter(r=>!shouldHideRowByMergeOnly(r,'side') && !shouldHideRowByMergeOnly(r,'superside'))) html += renderRowHtml(r, cols, low); for(const gr of groupedRowsForBlock(sub, cols, 'side', l)) html += renderRowHtml(gr, cols, low); });
+      const ssGroups=groupedRowsForBlock(normal, cols, 'superside'); const ssLabels=[]; ssGroups.forEach(r=>{ const l=r.superSideLabel||''; if(!ssLabels.includes(l)) ssLabels.push(l); }); ssLabels.forEach(l=>{ if(l) html+='<tr class="sectionrow"><td class="sectioncell" colspan="'+(2+cols.length)+'">'+esc(l)+'</td></tr>'; for(const gr of ssGroups.filter(r=>(r.superSideLabel||'')===l)) html += renderRowHtml(gr, cols, low); });
+    } else { for(const r of normal.filter(r=>!shouldHideRowByMergeOnly(r,'side'))) html += renderRowHtml(r, cols, low); for(const gr of groupedRowsForBlock(normal, cols, 'side')) html += renderRowHtml(gr, cols, low); }
+    for(const r of totals) html += renderRowHtml(r, cols, low);
+  }
+  html+='</tbody></table>'; out.innerHTML=html;
+  const warn=(res.warnings&&res.warnings.length)?' Warning: '+res.warnings.join(' '):'';
+  $('tableSummary').textContent='Rows used: '+res.used.toLocaleString()+' of '+res.totalRows.toLocaleString()+'. Row questions: '+(res.rowBlockCount||0)+'. Top banners: '+res.colCount+'. SuperTop groups: '+res.superCount+'. Time: '+(res.elapsedMs/1000).toFixed(2)+'s.'+warn;
+}
+function resultToCsv(res){
+  if(!res) return '';
+  res = cloneSortedResult(res);
+  const cols=res.columns||[];
+  const header=['Row','Statistic'].concat(cols.map(c=>{
+    const parts=[];
+    if(res.hasSuper) parts.push((c.superLabels||['Total']).join(' / '));
+    parts.push(c.bannerLabel||'Total');
+    parts.push(c.categoryLabel || (c.colLabels||['Total']).join(' / '));
+    return parts.join(' | ');
+  }));
+  const lines=[header];
+  for(const r of res.rows){
+    if(r.isSection) lines.push([r.rowText,''].concat(cols.map(()=>'')));
+    else lines.push([r.rowText,r.stat||''].concat((r.values||[]).map(v=>v.text)));
+  }
+  return lines.map(row=>row.map(csvCell).join(',')).join('\n');
+}
+function csvCell(v){ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+function download(name, text){ const blob=new Blob([text],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+function copyTable(){ if(!currentResult) return; navigator.clipboard.writeText(resultToCsv(currentResult).replace(/,/g,'\t')).then(()=>alert('Table copied.')); }
+function renderDictionary(){
+  if(!meta) return;
+  const html='<div class="table-wrap"><table class="report"><thead><tr><th>Type</th><th>ID</th><th>Label</th><th>Unique / columns</th><th>Mode</th></tr></thead><tbody>'+
+    allEntities.map(e=>'<tr><td>'+esc(e.kind==='group'?'MR/Grid':'Single')+'</td><td>'+esc(e.id)+'</td><td>'+esc(e.label)+'</td><td>'+esc(e.kind==='group'?e.count:e.unique)+'</td><td>'+esc(e.mode||'')+'</td></tr>').join('')+
+    '</tbody></table></div>';
+  $('dictOut').className=''; $('dictOut').innerHTML=html;
+}
+function dictionaryCsv(){ const rows=[['Type','ID','Label','Unique_or_Columns','Mode']].concat(allEntities.map(e=>[e.kind==='group'?'MR/Grid':'Single', e.id, e.label, e.kind==='group'?e.count:e.unique, e.mode||''])); return rows.map(r=>r.map(csvCell).join(',')).join('\n'); }
+function renderBrandGroupList(){
+  const box=$('brandGroupList'); if(!meta){ box.innerHTML='<div class="empty">Load data first.</div>'; return; }
+  let groups=meta.groups.filter(g=>g.isBI || /^BI_/i.test(g.id));
+  if(!groups.length){ groups=meta.groups.filter(g=>/^BI/i.test(g.label||'') || /^BI/i.test(g.id||'')); }
+  if(!groups.length){ box.innerHTML='<div class="empty">No BI_ groups detected. Use MR/Grid variables named BI_1_1, BI_1_2 etc. for brand imagery.</div>'; return; }
+  box.innerHTML=groups.map((g,i)=>'<label><input type="checkbox" value="'+esc(g.key)+'" '+(i<12?'checked':'')+' /> <span>'+esc(g.label)+' ('+g.count+')</span></label>').join('');
+  $('brandOut').className='empty';
+  $('brandOut').textContent='BI groups detected. Click Run Brand Imagery. First 12 BI groups are selected by default; change selection as needed.';
+}
+function selectedBrandGroups(){ return Array.from($('brandGroupList').querySelectorAll('input:checked')).map(x=>x.value); }
+function autoSelectBi(){ $('brandGroupList').querySelectorAll('input').forEach(x=>x.checked=true); }
+function clearBi(){ $('brandGroupList').querySelectorAll('input').forEach(x=>x.checked=false); }
+function runBrand(){
+  const groups=selectedBrandGroups(); if(!groups.length){ alert('Select at least one brand imagery group.'); return; }
+  const spec=buildSpec($('brandUseFilters').checked); spec.brandGroups=groups; spec.metric=$('brandMetric').value; spec.selectedValues=$('brandSelectedValues') ? $('brandSelectedValues').value : '1, Yes, Y, True, Selected'; spec.decimals=Number($('brandDecimals').value||1); spec.useFilters=$('brandUseFilters').checked; spec.brandTopSort=$('brandTopSort').value;
+  const tv=$('brandTopVar').value; if(tv){ const ent=allEntities.find(e=>e.key===tv || (e.kind==='var' && tv==='var:'+e.index)); if(ent) spec.brandTopEntity=ent; }
+  $('brandOut').className='empty'; $('brandOut').textContent='Calculating brand imagery...'; worker.postMessage({type:'brandCompute', spec:spec});
+}
+function renderBrandResult(res){
+  const out=$('brandOut'); out.className='table-wrap';
+  if(!res || !res.columns || !res.columns.length){ out.className='empty'; out.textContent='No brand imagery result. Select BI groups and click Run Brand Imagery.'; return; }
+  const cols=res.columns||[];
+  let html='<table class="report"><thead>';
+  if(res.hasTop){
+    html+='<tr><th class="rowhead" rowspan="2">Attribute</th>';
+    let i=0; while(i<cols.length){ const tk=cols[i].topKey; let j=i; while(j<cols.length && cols[j].topKey===tk) j++; html+='<th colspan="'+(j-i)+'">'+esc(cols[i].topLabel||'Total')+'</th>'; i=j; }
+    html+='</tr><tr>'+cols.map(c=>'<th>'+esc(c.label)+'</th>').join('')+'</tr>';
+  } else {
+    html+='<tr><th class="rowhead">Attribute</th>'+cols.map(c=>'<th>'+esc(c.label)+'</th>').join('')+'</tr>';
+  }
+  html+='</thead><tbody>';
+  const baseMap=new Map(res.baseByTop||[]);
+  html+='<tr class="baserow"><td class="rowhead">Base</td>'+cols.map(c=>{ const b=baseMap.get(c.topKey)||{w:0}; return '<td>'+Math.round(b.w||0).toLocaleString()+'</td>'; }).join('')+'</tr>';
+  for(const r of res.rows){ html+='<tr><td class="rowhead">'+esc(r.attribute)+'</td>'+r.values.map(v=>'<td>'+esc(v.text)+'</td>').join('')+'</tr>'; }
+  html+='</tbody></table>'; out.innerHTML=html;
+}
+function brandCsv(res){ if(!res) return ''; const rows=[['Attribute'].concat((res.columns||[]).map(c=>(res.hasTop?(c.topLabel+' | '):'')+c.label))].concat((res.rows||[]).map(r=>[r.attribute].concat(r.values.map(v=>v.text)))); return rows.map(r=>r.map(csvCell).join(',')).join('\n'); }
+
+function renderVisualization(){
+  const out=$('vizOut');
+  if(!currentResult){ out.className='empty'; out.textContent='Run a crosstab first.'; return; }
+  const stat=$('vizStat').value, limit=Math.max(1,Number($('vizLimit').value||20));
+  const cols=currentResult.columns||[];
+  let rows=(currentResult.rows||[]).filter(r=>!r.isSection && !r.isBase && !r.isQuestionTotal && (r.stat||'')===stat).slice(0,limit);
+  if(!rows.length){ out.className='empty'; out.textContent='No rows found for '+stat+'. Select that statistic and run crosstab again.'; return; }
+  out.className='table-wrap';
+  if($('vizType').value==='heatmap'){
+    let html='<table class="report"><thead><tr><th class="rowhead">Row</th>'+cols.map(c=>'<th>'+esc((c.superLabels&&currentResult.hasSuper?c.superLabels.join(' / ')+' | ':'')+(c.bannerLabel||'')+' '+(c.categoryLabel||''))+'</th>').join('')+'</tr></thead><tbody>';
+    for(const r of rows){ html+='<tr><td class="rowhead">'+esc(r.rowGroup? r.rowGroup+' / '+r.rowText:r.rowText)+'</td>'+r.values.map(v=>'<td>'+esc(v.text)+'</td>').join('')+'</tr>'; }
+    html+='</tbody></table>'; out.innerHTML=html; return;
+  }
+  const vals=rows.flatMap(r=>(r.values||[]).map(v=>Number(v.raw)).filter(Number.isFinite)); const max=Math.max(1,...vals.map(v=>Math.abs(v)));
+  let html='<div class="viz-card"><b>'+esc(stat)+'</b><div class="small">Bars show the selected statistic for each table column.</div></div>';
+  for(const r of rows){
+    html+='<div class="viz-row"><div class="viz-label" title="'+esc(r.rowText)+'">'+esc(r.rowText)+'</div><div class="viz-barline">';
+    for(let i=0;i<cols.length;i++){ const v=(r.values||[])[i]||{}; const raw=Number(v.raw); const h=Number.isFinite(raw)?Math.max(2,Math.round(Math.abs(raw)/max*30)):0; const title=((cols[i].superLabels&&currentResult.hasSuper?cols[i].superLabels.join(' / ')+' | ':'')+(cols[i].bannerLabel||'')+' '+(cols[i].categoryLabel||'')+': '+(v.text||'')); html+='<div class="viz-bar" title="'+esc(title)+'" style="height:'+h+'px"><span>'+esc(v.text||'')+'</span></div>'; }
+    html+='</div></div>';
+  }
+  out.innerHTML=html;
+}
+function saveSetup(){
+  const setup={zones:zones, options:{weight:$('weightSelect').value,includeMissing:$('includeMissing').checked,rowSort:$('rowSort').value,colSort:$('colSort').value,superSort:$('superSort').value,decimals:$('decimals').value,lowBase:$('lowBase').value,stats:{uw:$('statUw').checked,w:$('statW').checked,rowPct:$('statRow').checked,colPct:$('statCol').checked,totalPct:$('statTotal').checked,baseUw:$('statBaseUw').checked}, sig:{enabled:$('sigEnable').checked,z:$('sigThreshold').value,mode:$('sigMode').value}, customGroups:customGroups}, filters:Array.from(filterState.values()).map(st=>({entity:st.entity, selected:Array.from(st.selected)}))};
+  download('survey_report_setup.json', JSON.stringify(setup,null,2));
+}
+function loadSetupFile(file){
+  const rd=new FileReader(); rd.onload=()=>{ try{ const setup=JSON.parse(rd.result); ['rows','superside','cols','super','filters'].forEach(z=>{zones[z]=(setup.zones&&setup.zones[z])||[]}); renderZones(); if(setup.options){ const o=setup.options; $('includeMissing').checked=!!o.includeMissing; if(o.rowSort) $('rowSort').value=o.rowSort; if(o.colSort) $('colSort').value=o.colSort; if(o.superSort) $('superSort').value=o.superSort; $('decimals').value=o.decimals||1; $('lowBase').value=o.lowBase||30; if(o.weight!=null) $('weightSelect').value=o.weight; const st=o.stats||{}; [['statUw','uw'],['statW','w'],['statRow','rowPct'],['statCol','colPct'],['statTotal','totalPct'],['statBaseUw','baseUw']].forEach(([id,k])=>{ if(k in st) $(id).checked=!!st[k]; }); } $('filterPanel').innerHTML=''; filterState.clear(); if(setup.filters){ setup.filters.forEach(f=>pendingFilterSelections.set(f.entity.key, new Set(f.selected||[]))); } zones.filters.forEach(requestFilterCategories); alert('Setup loaded.'); }catch(e){alert('Could not load setup: '+e.message);} }; rd.readAsText(file); }
+function findWaveVar(){ return meta ? meta.variables.find(v=>/^wave$/i.test(v.id) || /^wave$/i.test(v.label)) : null; }
+function addWave(){ const w=findWaveVar(); if(w) addToZone('super', w); else alert('No WAVE variable found.'); }
+function addWaveTop(){ const w=findWaveVar(); if(w) addToZone('cols', w); else alert('No WAVE variable found.'); }
+function showHelp(){
+  $('modalBody').innerHTML='<p><b>Recommended workflow:</b> the embedded CSV from v15 loads automatically, then drag one or more questions to Side/Rows, drag banner variables such as SEC, WAVE, Gender, or Region to Top, and drag true nesting variables such as WAVE/Market/Region to SuperTop.</p><p><b>Rows and Top are flat:</b> multiple Side questions are stacked one after another; they are not nested. Multiple Top variables show as flat banner blocks: Total first, then each Top variable. SuperTop is the only area that nests the Top banner underneath it.</p><p><b>Bases and percentages:</b> All statistics are user-selectable. Choose Total %, Row %, Column %, Weighted n, Unweighted n, and Question unweighted base as needed. Bases are shown inside each question block only, using respondents valid for that question. Each row question also ends with a Total row when a percentage/count statistic is selected.</p><p><b>Large files:</b> the app parses the file in a Web Worker and stores compact coded columns. The embedded CSV is gzip-compressed inside the HTML. After the first load, tables calculate quickly because the app does not keep the raw CSV as heavy row objects.</p><p><b>Multiple response:</b> The app automatically handles both binary columns such as S2_1/S2_2 and repeated slot questions such as IN2_1/IN2_2. Use the Sort order controls to order Side rows by file/category order, label A-Z/Z-A, or Total value high-to-low/low-to-high. Top and SuperTop sort their category labels; changing sort updates the visible table immediately. Use Significance to add ▲/▼ markers vs Total or previous column. Use Response groups/nets to add rows like Jazz/Warid. The Visualization tab renders the latest crosstab as a bar chart or heatmap. For brand imagery like BI_1_1...BI_12_22, use the Brand Imagery tab; Brand Top/banner can split imagery by WAVE, SEC, Gender, Region, etc.</p>';
+  $('modal').classList.add('active');
+}
+function setupTabs(){
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); listMode=t.dataset.list; renderVarList();});
+  document.querySelectorAll('.worktab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.worktab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active')); t.classList.add('active'); $(t.dataset.pane).classList.add('active');});
+}
+
+function setupPanelToggles(){
+  const b=document.body;
+  function btn(id){ return $(id); }
+  function sync(){
+    if(btn('toggleVarsBtn')) btn('toggleVarsBtn').textContent = b.classList.contains('hide-vars') ? 'Show Variables' : 'Hide Variables';
+    if(btn('toggleBuilderBtn')) btn('toggleBuilderBtn').textContent = b.classList.contains('hide-builder') ? 'Show Builder' : 'Hide Builder';
+    if(btn('toggleOptionsBtn')) btn('toggleOptionsBtn').textContent = b.classList.contains('hide-options') ? 'Show Options' : 'Hide Options';
+    if(btn('focusBtn')) btn('focusBtn').textContent = b.classList.contains('table-focus') ? 'Exit Focus' : 'Table Focus';
+  }
+  if(btn('toggleVarsBtn')) btn('toggleVarsBtn').onclick=()=>{b.classList.toggle('hide-vars'); b.classList.remove('table-focus'); sync();};
+  if(btn('toggleBuilderBtn')) btn('toggleBuilderBtn').onclick=()=>{b.classList.toggle('hide-builder'); b.classList.remove('table-focus'); sync();};
+  if(btn('toggleOptionsBtn')) btn('toggleOptionsBtn').onclick=()=>{b.classList.toggle('hide-options'); b.classList.remove('table-focus'); sync();};
+  if(btn('focusBtn')) btn('focusBtn').onclick=()=>{b.classList.toggle('table-focus'); if(b.classList.contains('table-focus')){ b.classList.add('hide-vars','hide-builder','hide-options'); } else { b.classList.remove('hide-vars','hide-builder','hide-options'); } sync();};
+  if(btn('resetLayoutBtn')) btn('resetLayoutBtn').onclick=()=>{b.classList.remove('hide-vars','hide-builder','hide-options','table-focus'); sync();};
+  sync();
+}
+
+function setupEvents(){
+  $('runBtn').onclick=runCrosstab; $('varSearch').oninput=renderVarList; $('addGroupBtn').onclick=addCustomGroup; $('renderVizBtn').onclick=renderVisualization; ['rowSort','colSort','superSort'].forEach(id=>$(id).onchange=()=>{if(currentResult) renderResult(currentResult);}); $('exportCsvBtn').onclick=()=>download('crosstab.csv', resultToCsv(currentResult)); $('copyBtn').onclick=copyTable; $('printBtn').onclick=()=>window.print(); $('exportDictBtn').onclick=()=>download('dictionary.csv', dictionaryCsv()); $('saveSetupBtn').onclick=saveSetup; $('setupInput').onchange=e=>{if(e.target.files[0]) loadSetupFile(e.target.files[0]);}; $('quickWaveBtn').onclick=addWave; $('quickWaveTopBtn').onclick=addWaveTop; $('helpBtn').onclick=showHelp; $('closeModal').onclick=()=>$('modal').classList.remove('active'); $('modal').addEventListener('click',e=>{if(e.target.id==='modal') $('modal').classList.remove('active');}); $('autoBiBtn').onclick=autoSelectBi; $('clearBiBtn').onclick=clearBi; $('runBrandBtn').onclick=runBrand; $('exportBrandBtn').onclick=()=>download('brand_imagery.csv', brandCsv(currentBrand)); ['sigEnable','sigThreshold','sigMode'].forEach(id=>$(id).onchange=()=>{if(currentResult) renderResult(currentResult);});
+}
+setupDrops(); setupTabs(); setupEvents(); setupPanelToggles();
+window.addEventListener('DOMContentLoaded',()=>setTimeout(loadEmbeddedData,50));
+</script>
+</body>
+</html>
