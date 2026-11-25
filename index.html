@@ -484,7 +484,7 @@ html.reading, html.reading body { overflow: hidden; }
           <input id="urlin" placeholder="…or paste a PDF link or relative path (e.g. library/book.pdf)" aria-label="PDF URL or path">
           <button class="btn" type="submit">Open</button>
         </form>
-        <input type="file" id="filein" accept="application/pdf,.pdf" multiple hidden>
+        <input type="file" id="filein" accept=".pdf,application/pdf,application/octet-stream" multiple hidden>
       </div>
       <div class="howto">
         <div><span class="n">1</span><span><b>Tap a word</b>Its meaning in Urdu and English pops up, and it's read aloud.</span></div>
@@ -2247,6 +2247,41 @@ window.LughatReader = (function () {
 </script>
 <script>
 LughatReader.toggle(/^#\/reader|[#&]file=/.test(location.hash));
+</script>
+
+<script>
+/* --- LUGHAT PDF FIXES (Injected via Python) --- */
+
+// Fix 1: Resolve GitHub Pages relative links and GitHub Blob URLs
+window.resolvePdfSource = function(src) {
+    if (!src) return null;
+    src = src.trim();
+    
+    // Convert GitHub viewer links to raw binary links
+    const ghBlob = src.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/i);
+    if (ghBlob) {
+        return `https://raw.githubusercontent.com/${ghBlob[1]}/${ghBlob[2]}/${ghBlob[3]}`;
+    }
+    
+    // Resolve relative paths against document.baseURI (preserves /repo-name/ subpaths)
+    if (!/^(https?:|blob:|data:)/i.test(src)) {
+        return new URL(src.replace(/^\/+/, ""), document.baseURI).href;
+    }
+    return src;
+};
+
+// Fix 2: Android IndexedDB & PDF.js ArrayBuffer Detachment Fix
+window.processPdfFileForAndroid = async function(file) {
+    const buf = await file.arrayBuffer();
+    
+    // Create a Blob to store safely in IndexedDB (bypasses Android File object cloning bugs)
+    const pdfBlob = new Blob([buf], { type: "application/pdf" });
+    
+    // Clone the buffer for PDF.js so it doesn't detach the original memory from the browser
+    const pdfData = new Uint8Array(buf.slice(0)); 
+    
+    return { blob: pdfBlob, pdfjsData: pdfData };
+};
 </script>
 </body>
 </html>
